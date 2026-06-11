@@ -16,9 +16,9 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'cloudinary_storage', # ДОЛЖНО БЫТЬ ПЕРЕД staticfiles
+    'cloudinary_storage',  # Это должно быть ПЕРЕД staticfiles
     'django.contrib.staticfiles',
-    'cloudinary',         # Библиотека Cloudinary
+    'cloudinary',
     'cafe', 
 ]
 
@@ -73,14 +73,12 @@ else:
     }
 
 # --- ХРАНЕНИЕ ФАЙЛОВ (Cloudinary) ---
-# Эти настройки позволят загружать фото отелей в облако, а не на диск Vercel
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }
 
-# Указываем Django использовать Cloudinary для Медиа-файлов (картинок)
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 AUTH_PASSWORD_VALIDATORS = [
