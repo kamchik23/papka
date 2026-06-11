@@ -1,0 +1,81 @@
+{% extends 'cafe/base.html' %}
+
+{% block content %}
+<div class="relative min-h-screen bg-cover bg-center bg-fixed px-4 py-12" 
+     style="background-image: url('/static/cafe/img/Италия.jpg');">
+    
+    <div class="absolute inset-0 bg-slate-900/60"></div>
+
+    <div class="relative z-10 max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- ЛЕВАЯ КОЛОНКА: ИНФО О ПОЛЬЗОВАТЕЛЕ -->
+            <div class="lg:col-span-1">
+                <div class="bg-white/10 backdrop-blur-3xl border border-white/20 p-8 rounded-[2.5rem] shadow-2xl text-center">
+                    <div class="w-24 h-24 bg-gradient-to-tr from-blue-500 to-indigo-600 rounded-full mx-auto mb-6 flex items-center justify-center text-3xl font-bold text-white shadow-lg">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <h2 class="text-2xl font-bold text-white mb-2">{{ profile.full_name }}</h2>
+                    <p class="text-blue-200/70 text-sm mb-6 italic">Участник клуба путешественников</p>
+                    
+                    <div class="space-y-4 text-left border-t border-white/10 pt-6">
+                        <div>
+                            <p class="text-[10px] uppercase tracking-widest text-blue-200/50 font-bold">Телефон</p>
+                            <p class="text-white font-medium">{{ profile.phone }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] uppercase tracking-widest text-blue-200/50 font-bold">Почта</p>
+                            <p class="text-white font-medium">{{ user.email }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] uppercase tracking-widest text-blue-200/50 font-bold">Дата рождения</p>
+                            <p class="text-white font-medium">{{ profile.date_of_birth|date:"d E Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ПРАВАЯ КОЛОНКА: МОИ БРОНИРОВАНИЯ -->
+            <div class="lg:col-span-2">
+                <div class="bg-white/10 backdrop-blur-3xl border border-white/20 p-8 rounded-[2.5rem] shadow-2xl h-full">
+                    <h3 class="text-2xl font-bold text-white mb-8 flex items-center">
+                        <span class="mr-3">✈️</span> Мои бронирования
+                    </h3>
+
+                    {% if bookings %}
+                        <div class="space-y-4">
+                            {% for b in bookings %}
+                            <div class="group bg-white/5 hover:bg-white/10 border border-white/10 p-6 rounded-2xl transition-all duration-300">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h4 class="text-xl font-bold text-white group-hover:text-blue-300 transition">{{ b.tour.title }}</h4>
+                                        <p class="text-sm text-blue-100/60 mt-1">
+                                            📅 {{ b.tour.start_date }} — {{ b.tour.end_date }}
+                                        </p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-blue-300 font-bold text-lg">{{ b.tour.price }} ₽</p>
+                                        <p class="text-[10px] uppercase text-white/40 mt-1 italic">Заявка от {{ b.created_at|date:"d.m.Y" }}</p>
+                                    </div>
+                                </div>
+                                <div class="mt-4 flex items-center text-xs text-white/60">
+                                    <span class="bg-blue-500/20 text-blue-200 px-3 py-1 rounded-full border border-blue-500/30">
+                                        👥 {{ b.people_count }} чел.
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-20">
+                            <p class="text-white/40 text-lg italic">Вы еще не выбрали свое первое путешествие...</p>
+                            <a href="{% url 'main' %}" class="inline-block mt-6 px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-500 transition">Найти тур</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

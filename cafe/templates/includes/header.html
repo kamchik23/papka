@@ -1,0 +1,61 @@
+{% load static %}
+<header id="header">
+    <div class="inner">
+        <!-- Logo -->
+        <a href="{% url 'main' %}" class="logo">
+            <span class="symbol"><img src="{% static 'images/logo.svg' %}" alt="" /></span>
+            <span class="title">ПАЛЬМАТУР</span>
+        </a>
+
+        <!-- Nav -->
+        <nav>
+            <ul style="display: flex; align-items: center; list-style: none; margin: 0; padding: 0;">
+                
+                <!-- Кнопка ИГРАТЬ (Видна на ПК) -->
+                <li class="desktop-only" style="margin-right: 20px;">
+                    <a href="{% url 'game_page' %}" class="button primary small" style="background-color: #f59e0b; border-color: #f59e0b; color: white !important; font-weight: 900;">
+                        🎮 ИГРАТЬ
+                    </a>
+                </li>
+
+                <!-- Иконка корзины -->
+                <li style="margin-right: 15px;">
+                    <a href="{% url 'main' %}" style="border: none;">
+                        <img src="{% static 'images/cart.jpg' %}" width="30" height="30" alt="Корзина" style="border-radius: 5px;">
+                    </a>
+                </li>
+
+                <!-- Профиль -->
+                <li style="margin-right: 15px;">
+                    <a href="{% url 'profile' %}" style="border: none;">
+                        <img src="{% static 'images/profile.png' %}" width="30" height="30" alt="Профиль">
+                    </a>
+                </li>
+
+                <!-- Блок ВЫХОД (Для ПК) -->
+                {% if user.is_authenticated %}
+                <li class="desktop-only" style="margin-left: 10px; border-left: 1px solid #ddd; padding-left: 15px; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 0.7em; font-weight: bold; text-transform: uppercase; color: #666;">{{ user.username }}</span>
+                    <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" style="background: #ff4d4d; color: white; border: none; padding: 5px 12px; border-radius: 4px; font-size: 0.6em; font-weight: 900; cursor: pointer; text-transform: uppercase;">
+                            Выход
+                        </button>
+                    </form>
+                </li>
+                {% endif %}
+
+                <li style="margin-left: 20px;"><a href="#menu">Меню</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<style>
+    /* Скрываем элементы на мобильных устройствах, если нужно */
+    @media screen and (max-width: 736px) {
+        .desktop-only {
+            display: none !important;
+        }
+    }
+</style>

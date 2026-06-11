@@ -1,0 +1,1597 @@
+{% extends 'cafe/base.html' %}
+
+{% block title %}Админ панель - Туристическое агентство{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <!-- Мобильный хедер -->
+    <div class="mobile-header">
+        <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+            <span class="menu-icon">☰</span>
+        </button>
+        <div class="mobile-title">
+            <h1>Админ панель</h1>
+            <div class="mobile-user-info">
+                <span class="mobile-username">{{ user.username }}</span>
+                <span class="mobile-role">Админ</span>
+            </div>
+        </div>
+        <div class="mobile-user">
+            <div class="mobile-avatar">{{ user.username|first|upper }}</div>
+        </div>
+    </div>
+
+    <!-- Админ навигация -->
+    <div class="admin-sidebar" id="mobileSidebar">
+        <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+        <div class="sidebar-content">
+            <div class="sidebar-header">
+                <h3 class="sidebar-title">Админ панель</h3>
+                <div class="sidebar-user">
+                    <div class="sidebar-avatar">{{ user.username|first|upper }}</div>
+                    <div class="sidebar-user-info">
+                        <div class="sidebar-username">{{ user.username }}</div>
+                        <div class="sidebar-role">Администратор</div>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="admin-menu">
+                <a href="{% url 'admin_dashboard' %}" class="menu-item {% if active_page == 'dashboard' %}active{% endif %}">
+                    <span class="menu-icon">📊</span>
+                    <span class="menu-title">Дашборд</span>
+                </a>
+                
+                <a href="{% url 'admin_tours' %}" class="menu-item {% if active_page == 'tours' %}active{% endif %}">
+                    <span class="menu-icon">🏝️</span>
+                    <span class="menu-title">Управление турами</span>
+                </a>
+                
+                <a href="{% url 'admin_bookings' %}" class="menu-item {% if active_page == 'bookings' %}active{% endif %}">
+                    <span class="menu-icon">📋</span>
+                    <span class="menu-title">Бронирования</span>
+                </a>
+                
+                <a href="{% url 'admin_clients' %}" class="menu-item {% if active_page == 'clients' %}active{% endif %}">
+                    <span class="menu-icon">👥</span>
+                    <span class="menu-title">Клиенты</span>
+                </a>
+                
+                <a href="{% url 'admin_managers' %}" class="menu-item {% if active_page == 'managers' %}active{% endif %}">
+                    <span class="menu-icon">👔</span>
+                    <span class="menu-title">Менеджеры</span>
+                </a>
+                
+                <a href="{% url 'admin_add_tour' %}" class="menu-item {% if active_page == 'add_tour' %}active{% endif %}">
+                    <span class="menu-icon">➕</span>
+                    <span class="menu-title">Добавить тур</span>
+                </a>
+                
+                <a href="/admin/" target="_blank" class="menu-item">
+                    <span class="menu-icon">⚙️</span>
+                    <span class="menu-title">Django-админка</span>
+                </a>
+                
+                <hr class="menu-divider">
+                
+                <a href="{% url 'main' %}" class="menu-item">
+                    <span class="menu-icon">🏠</span>
+                    <span class="menu-title">На главную</span>
+                </a>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="admin-content">
+        <div class="content-header">
+            <div class="header-left">
+                <h1 class="page-title">Административная панель</h1>
+                <p class="page-subtitle">Добро пожаловать, {{ user.username }}!</p>
+            </div>
+            <div class="header-right">
+                <div class="header-actions">
+                    <a href="{% url 'admin_add_tour' %}" class="btn-primary">
+                        <span class="btn-icon">➕</span>
+                        <span class="btn-text">Добавить тур</span>
+                    </a>
+                    <div class="header-stats">
+                        <div class="header-stat">
+                            <span class="stat-number">{{ total_tours }}</span>
+                            <span class="stat-label">Туры</span>
+                        </div>
+                        <div class="header-stat">
+                            <span class="stat-number">{{ total_bookings }}</span>
+                            <span class="stat-label">Бронь</span>
+                        </div>
+                        <div class="header-stat">
+                            <span class="stat-number">{{ total_clients }}</span>
+                            <span class="stat-label">Клиенты</span>
+                        </div>
+                        <div class="header-stat">
+                            <span class="stat-number">{{ total_managers }}</span>
+                            <span class="stat-label">Менеджеры</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="admin-messages">
+            {% for message in messages %}
+            <div class="message message-{{ message.tags }}">
+                <span class="message-icon">
+                    {% if message.tags == 'success' %}✅
+                    {% elif message.tags == 'error' %}❌
+                    {% elif message.tags == 'warning' %}⚠️
+                    {% else %}💡{% endif %}
+                </span>
+                <span class="message-text">{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Статистика -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">🏝️</div>
+                    <div class="stat-title">Всего туров</div>
+                </div>
+                <div class="stat-value">{{ total_tours }}</div>
+                <div class="stat-trend">
+                    <span class="trend-icon">📊</span>
+                    <span class="trend-text">{{ active_tours }} активных</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-title">Активных туров</div>
+                </div>
+                <div class="stat-value">{{ active_tours }}</div>
+                <div class="stat-trend positive">
+                    <span class="trend-icon">↗</span>
+                    <span class="trend-text">Доступны для бронирования</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-title">Бронирований</div>
+                </div>
+                <div class="stat-value">{{ total_bookings }}</div>
+                <div class="stat-trend">
+                    <span class="trend-icon">📈</span>
+                    <span class="trend-text">Всего за всё время</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">👔</div>
+                    <div class="stat-title">Менеджеров</div>
+                </div>
+                <div class="stat-value">{{ total_managers }}</div>
+                <div class="stat-trend">
+                    <span class="trend-icon">👥</span>
+                    <span class="trend-text">Всего в системе</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Последние клиенты -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">👥</span>
+                        Последние клиенты
+                    </h2>
+                    <a href="{% url 'admin_clients' %}" class="card-action">
+                        Все клиенты <span class="action-arrow">→</span>
+                    </a>
+                </div>
+                
+                <div class="card-content">
+                    {% if recent_clients %}
+                    <div class="list-container">
+                        {% for client in recent_clients %}
+                        <div class="list-item">
+                            <div class="item-avatar">
+                                {{ client.username|first|upper }}
+                            </div>
+                            <div class="item-info">
+                                <div class="item-main">
+                                    <h3 class="item-title">
+                                        {% if client.last_name or client.first_name %}
+                                            {{ client.last_name }} {{ client.first_name }}
+                                        {% else %}
+                                            {{ client.username }}
+                                        {% endif %}
+                                    </h3>
+                                    <p class="item-subtitle">{{ client.email|default:"Email не указан" }}</p>
+                                </div>
+                                <div class="item-meta">
+                                    <div class="meta-item">
+                                        <span class="meta-icon">📅</span>
+                                        <span class="meta-text">{{ client.date_joined|date:"d.m.Y" }}</span>
+                                    </div>
+                                    {% if client.userprofile.phone %}
+                                    <div class="meta-item">
+                                        <span class="meta-icon">📱</span>
+                                        <span class="meta-text">{{ client.userprofile.phone }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="item-status">
+                                {% if client.is_staff %}
+                                    {% if client.is_superuser %}
+                                    <span class="status-badge status-admin">
+                                        <span class="status-dot"></span>
+                                        Админ
+                                    </span>
+                                    {% else %}
+                                    <span class="status-badge status-manager">
+                                        <span class="status-dot"></span>
+                                        Менеджер
+                                    </span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="status-badge status-active">
+                                    <span class="status-dot"></span>
+                                    Клиент
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if not forloop.last %}
+                        <hr class="list-divider">
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">👤</div>
+                        <h3 class="empty-title">Клиентов пока нет</h3>
+                        <p class="empty-text">Клиенты появятся здесь после регистрации</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Последние менеджеры -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">👔</span>
+                        Последние менеджеры
+                    </h2>
+                    <a href="{% url 'admin_managers' %}" class="card-action">
+                        Все менеджеры <span class="action-arrow">→</span>
+                    </a>
+                </div>
+                
+                <div class="card-content">
+                    {% if recent_managers %}
+                    <div class="list-container">
+                        {% for manager in recent_managers %}
+                        <div class="list-item">
+                            <div class="item-avatar">
+                                {{ manager.username|first|upper }}
+                            </div>
+                            <div class="item-info">
+                                <div class="item-main">
+                                    <h3 class="item-title">
+                                        {% if manager.last_name or manager.first_name %}
+                                            {{ manager.last_name }} {{ manager.first_name }}
+                                        {% else %}
+                                            {{ manager.username }}
+                                        {% endif %}
+                                    </h3>
+                                    <p class="item-subtitle">{{ manager.email|default:"Email не указан" }}</p>
+                                </div>
+                                <div class="item-meta">
+                                    <div class="meta-item">
+                                        <span class="meta-icon">📅</span>
+                                        <span class="meta-text">{{ manager.date_joined|date:"d.m.Y" }}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="meta-icon">👔</span>
+                                        <span class="meta-text">Менеджер</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="item-status">
+                                <span class="status-badge status-manager">
+                                    <span class="status-dot"></span>
+                                    Менеджер
+                                </span>
+                            </div>
+                        </div>
+                        {% if not forloop.last %}
+                        <hr class="list-divider">
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">👔</div>
+                        <h3 class="empty-title">Менеджеров пока нет</h3>
+                        <p class="empty-text">Менеджеры появятся здесь после создания</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Быстрые действия -->
+        <div class="quick-actions">
+            <h2 class="section-title">
+                <span class="section-icon">⚡</span>
+                Быстрые действия
+            </h2>
+            <div class="actions-grid">
+                <a href="{% url 'admin_add_tour' %}" class="action-card">
+                    <div class="action-icon">➕</div>
+                    <div class="action-content">
+                        <h3 class="action-title">Добавить тур</h3>
+                        <p class="action-description">Создать новый тур для бронирования</p>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </a>
+                
+                <a href="{% url 'admin_add_manager' %}" class="action-card">
+                    <div class="action-icon">👔</div>
+                    <div class="action-content">
+                        <h3 class="action-title">Добавить менеджера</h3>
+                        <p class="action-description">Создать аккаунт менеджера</p>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </a>
+                
+                <a href="{% url 'admin_tours' %}" class="action-card">
+                    <div class="action-icon">🏝️</div>
+                    <div class="action-content">
+                        <h3 class="action-title">Управление турами</h3>
+                        <p class="action-description">Редактировать существующие туры</p>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </a>
+                
+                <a href="{% url 'admin_bookings' %}" class="action-card">
+                    <div class="action-icon">📋</div>
+                    <div class="action-content">
+                        <h3 class="action-title">Бронирования</h3>
+                        <p class="action-description">Просмотр и управление бронями</p>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleMobileMenu() {
+    const sidebar = document.getElementById('mobileSidebar');
+    sidebar.classList.toggle('active');
+    document.body.classList.toggle('menu-open');
+}
+
+// Закрытие меню при клике на ссылку
+document.querySelectorAll('.admin-menu a').forEach(link => {
+    link.addEventListener('click', () => {
+        const sidebar = document.getElementById('mobileSidebar');
+        if (sidebar.classList.contains('active')) {
+            toggleMobileMenu();
+        }
+    });
+});
+
+// Анимация статистики
+document.addEventListener('DOMContentLoaded', function() {
+    const statValues = document.querySelectorAll('.stat-value');
+    statValues.forEach(stat => {
+        const value = parseInt(stat.textContent);
+        stat.style.setProperty('--value', value);
+        stat.textContent = '0';
+        
+        // Анимация счетчика
+        let counter = 0;
+        const increment = Math.max(1, value / 50);
+        const timer = setInterval(() => {
+            counter += increment;
+            if (counter >= value) {
+                stat.textContent = value;
+                clearInterval(timer);
+            } else {
+                stat.textContent = Math.floor(counter);
+            }
+        }, 30);
+    });
+});
+
+// Удаление менеджера с подтверждением
+function confirmDeleteManager(managerId, managerName) {
+    if (confirm(`Вы уверены, что хотите удалить менеджера "${managerName}"?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `{% url 'admin_delete_manager' 0 %}`.replace('0', managerId);
+        
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrfmiddlewaretoken';
+        csrfToken.value = '{{ csrf_token }}';
+        form.appendChild(csrfToken);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+
+<style>
+/* Основные переменные с фиолетовыми цветами для админа */
+:root {
+    --primary-color: #2C5277;
+    --secondary-color: #4A90E2;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --danger-color: #e74c3c;
+    --dark-color: #2c3e50;
+    --gray-color: #7f8c8d;
+    --light-gray: #f8f9fa;
+    --border-color: #e0e0e0;
+    --shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    --border-radius: 12px;
+    --card-radius: 16px;
+}
+
+.admin-container {
+    display: flex;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+    position: relative;
+}
+
+/* Мобильный хедер */
+.mobile-header {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: white;
+    box-shadow: 0 2px 15px rgba(44, 82, 119, 0.1);
+    padding: 12px 16px;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(10px);
+}
+
+.mobile-menu-toggle {
+    background: var(--primary-color);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle:hover {
+    background: var(--secondary-color);
+    transform: scale(1.05);
+}
+
+.mobile-title {
+    flex: 1;
+    margin: 0 15px;
+}
+
+.mobile-title h1 {
+    font-size: 1.1rem;
+    margin: 0;
+    color: var(--dark-color);
+    font-weight: 600;
+}
+
+.mobile-user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.mobile-username {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--dark-color);
+}
+
+.mobile-role {
+    font-size: 0.75rem;
+    color: white;
+    background: var(--primary-color);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-top: 2px;
+}
+
+.mobile-user {
+    display: flex;
+    align-items: center;
+}
+
+.mobile-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Админ навигация */
+.admin-sidebar {
+    width: 280px;
+    background: white;
+    box-shadow: 2px 0 15px rgba(44, 82, 119, 0.08);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-right: 1px solid var(--border-color);
+}
+
+.sidebar-content {
+    height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    backdrop-filter: blur(3px);
+}
+
+.sidebar-header {
+    padding: 30px 25px 20px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.sidebar-title {
+    font-size: 1.3rem;
+    margin: 0 0 20px 0;
+    font-weight: 600;
+    text-align: center;
+    opacity: 0.95;
+}
+
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-avatar {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    flex-shrink: 0;
+}
+
+.sidebar-user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.sidebar-username {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-role {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.admin-menu {
+    padding: 20px 0;
+    flex: 1;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 16px 25px;
+    text-decoration: none;
+    color: var(--dark-color);
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+    margin: 0 10px;
+    border-radius: 10px;
+    position: relative;
+}
+
+.menu-item:hover {
+    background: rgba(44, 82, 119, 0.05);
+    color: var(--primary-color);
+    transform: translateX(5px);
+}
+
+.menu-item.active {
+    background: rgba(44, 82, 119, 0.1);
+    color: var(--primary-color);
+    border-left-color: var(--primary-color);
+    font-weight: 500;
+}
+
+.menu-icon {
+    font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.menu-title {
+    font-weight: 500;
+    font-size: 0.95rem;
+    flex: 1;
+}
+
+.menu-divider {
+    margin: 20px 25px;
+    border: none;
+    border-top: 1px solid var(--border-color);
+    opacity: 0.5;
+}
+
+/* Основной контент */
+.admin-content {
+    flex: 1;
+    margin-left: 280px;
+    padding: 30px;
+    max-width: calc(100% - 280px);
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.header-left {
+    flex: 1;
+    min-width: 300px;
+}
+
+.page-title {
+    font-size: 2rem;
+    color: var(--dark-color);
+    margin: 0 0 8px 0;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.page-subtitle {
+    color: var(--gray-color);
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+.header-right {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-stats {
+    display: flex;
+    gap: 20px;
+}
+
+.header-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: white;
+    padding: 15px 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    min-width: 100px;
+}
+
+.header-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.stat-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--gray-color);
+    margin-top: 5px;
+    text-align: center;
+}
+
+/* Кнопки */
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(44, 82, 119, 0.2);
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(44, 82, 119, 0.3);
+    background: linear-gradient(135deg, #2a4d6d 0%, var(--primary-color) 100%);
+}
+
+/* Сообщения */
+.admin-messages {
+    margin-bottom: 25px;
+}
+
+.message {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 18px 24px;
+    border-radius: var(--border-radius);
+    margin-bottom: 15px;
+    font-weight: 500;
+    border-left: 4px solid;
+    background: white;
+    box-shadow: var(--shadow);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message-success {
+    border-left-color: var(--success-color);
+    background: linear-gradient(90deg, rgba(39, 174, 96, 0.05) 0%, rgba(39, 174, 96, 0.02) 100%);
+}
+
+.message-error {
+    border-left-color: var(--danger-color);
+    background: linear-gradient(90deg, rgba(231, 76, 60, 0.05) 0%, rgba(231, 76, 60, 0.02) 100%);
+}
+
+.message-warning {
+    border-left-color: var(--warning-color);
+    background: linear-gradient(90deg, rgba(243, 156, 18, 0.05) 0%, rgba(243, 156, 18, 0.02) 100%);
+}
+
+.message-info {
+    border-left-color: var(--primary-color);
+    background: linear-gradient(90deg, rgba(44, 82, 119, 0.05) 0%, rgba(44, 82, 119, 0.02) 100%);
+}
+
+.message-icon {
+    font-size: 1.3rem;
+}
+
+.message-text {
+    flex: 1;
+    font-size: 0.95rem;
+}
+
+/* Статистика */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: var(--card-radius);
+    padding: 25px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    animation: cardAppear 0.4s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+@keyframes cardAppear {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stat-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.stat-title {
+    font-size: 1rem;
+    color: var(--gray-color);
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--dark-color);
+    line-height: 1;
+    margin-bottom: 15px;
+}
+
+.stat-trend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+.trend-icon {
+    font-size: 1.2rem;
+}
+
+.trend-text {
+    font-size: 0.85rem;
+    color: var(--gray-color);
+}
+
+.stat-trend.positive .trend-icon {
+    color: var(--success-color);
+}
+
+/* Дашборд грид */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.dashboard-card {
+    background: white;
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: cardAppear 0.4s ease 0.2s backwards;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px;
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(90deg, rgba(44, 82, 119, 0.03) 0%, rgba(44, 82, 119, 0) 100%);
+}
+
+.card-title {
+    font-size: 1.3rem;
+    color: var(--dark-color);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.card-icon {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+}
+
+.card-action {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.card-action:hover {
+    gap: 10px;
+    color: var(--secondary-color);
+}
+
+.action-arrow {
+    font-size: 1.1rem;
+}
+
+.card-content {
+    padding: 25px;
+    flex: 1;
+}
+
+/* Список элементов */
+.list-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.list-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 0;
+    transition: all 0.3s ease;
+}
+
+.list-item:hover {
+    background: rgba(44, 82, 119, 0.02);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 0 -15px;
+}
+
+.item-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.item-main {
+    margin-bottom: 8px;
+}
+
+.item-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--dark-color);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.item-subtitle {
+    font-size: 0.9rem;
+    color: var(--gray-color);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.item-meta {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.85rem;
+    color: var(--gray-color);
+}
+
+.meta-icon {
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.item-status {
+    flex-shrink: 0;
+}
+
+.item-amount {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+}
+
+.amount-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--dark-color);
+}
+
+.amount-label {
+    font-size: 0.85rem;
+    color: var(--gray-color);
+}
+
+/* Статус-бейджи */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-active {
+    background: rgba(39, 174, 96, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(39, 174, 96, 0.2);
+}
+
+.status-pending {
+    background: rgba(243, 156, 18, 0.1);
+    color: var(--warning-color);
+    border: 1px solid rgba(243, 156, 18, 0.2);
+}
+
+.status-confirmed {
+    background: rgba(44, 82, 119, 0.1);
+    color: var(--primary-color);
+    border: 1px solid rgba(44, 82, 119, 0.2);
+}
+
+.status-cancelled {
+    background: rgba(231, 76, 60, 0.1);
+    color: var(--danger-color);
+    border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.status-admin {
+    background: rgba(155, 89, 182, 0.1);
+    color: #9b59b6;
+    border: 1px solid rgba(155, 89, 182, 0.2);
+}
+
+.status-manager {
+    background: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+    border: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-active .status-dot {
+    background: var(--success-color);
+}
+
+.status-pending .status-dot {
+    background: var(--warning-color);
+}
+
+.status-confirmed .status-dot {
+    background: var(--primary-color);
+}
+
+.status-cancelled .status-dot {
+    background: var(--danger-color);
+}
+
+.status-admin .status-dot {
+    background: #9b59b6;
+}
+
+.status-manager .status-dot {
+    background: #3498db;
+}
+
+/* Разделитель списка */
+.list-divider {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 0;
+    opacity: 0.5;
+}
+
+/* Пустое состояние */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--gray-color);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.empty-title {
+    font-size: 1.2rem;
+    color: var(--dark-color);
+    margin: 0 0 8px 0;
+    font-weight: 600;
+}
+
+.empty-text {
+    font-size: 0.95rem;
+    margin: 0;
+    max-width: 300px;
+}
+
+/* Быстрые действия */
+.quick-actions {
+    margin-top: 30px;
+}
+
+.section-title {
+    font-size: 1.4rem;
+    color: var(--dark-color);
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.section-icon {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.action-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 25px;
+    background: white;
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    box-shadow: var(--shadow);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.action-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.action-card:hover::before {
+    opacity: 1;
+}
+
+.action-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: white;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.action-card:hover .action-icon {
+    transform: scale(1.1);
+}
+
+.action-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.action-title {
+    font-size: 1.1rem;
+    color: var(--dark-color);
+    margin: 0 0 8px 0;
+    font-weight: 600;
+}
+
+.action-description {
+    font-size: 0.9rem;
+    color: var(--gray-color);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.action-arrow {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    transition: all 0.3s ease;
+}
+
+.action-card:hover .action-arrow {
+    transform: translateX(5px);
+}
+
+/* Дополнительные кнопки */
+.btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+}
+
+.btn-secondary {
+    background: var(--light-gray);
+    color: var(--dark-color);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: #e9ecef;
+}
+
+.btn-danger {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+/* Адаптивность */
+@media (max-width: 1024px) {
+    .admin-content {
+        margin-left: 0;
+        max-width: 100%;
+        padding: 20px;
+    }
+    
+    .content-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .header-left {
+        min-width: unset;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .header-stats {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .header-stat {
+        flex: 1;
+        min-width: 120px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .actions-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .mobile-header {
+        display: flex;
+    }
+    
+    .admin-sidebar {
+        transform: translateX(-100%);
+        width: 85%;
+        max-width: 320px;
+    }
+    
+    .admin-sidebar.active {
+        transform: translateX(0);
+    }
+    
+    .admin-sidebar.active + .sidebar-overlay {
+        display: block;
+    }
+    
+    body.menu-open {
+        overflow: hidden;
+    }
+    
+    .admin-content {
+        padding: 80px 16px 20px;
+    }
+    
+    .content-header {
+        gap: 15px;
+    }
+    
+    .page-title {
+        font-size: 1.6rem;
+    }
+    
+    .page-subtitle {
+        font-size: 1rem;
+    }
+    
+    .header-stats {
+        gap: 10px;
+    }
+    
+    .header-stat {
+        padding: 12px 15px;
+        min-width: 100px;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .stat-card {
+        padding: 20px;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+    }
+    
+    .dashboard-grid {
+        gap: 20px;
+    }
+    
+    .card-header,
+    .card-content {
+        padding: 20px;
+    }
+    
+    .item-meta {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-card {
+        padding: 20px;
+    }
+    
+    .action-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+    
+    .btn-primary {
+        padding: 16px 20px;
+        font-size: 1rem;
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-content {
+        padding: 70px 12px 16px;
+    }
+    
+    .header-stat {
+        min-width: 80px;
+        padding: 10px 12px;
+    }
+    
+    .stat-number {
+        font-size: 1.3rem;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .card-action {
+        align-self: flex-end;
+    }
+    
+    .list-item {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .item-avatar {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .item-status {
+        margin-left: auto;
+    }
+    
+    .action-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .action-content {
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}

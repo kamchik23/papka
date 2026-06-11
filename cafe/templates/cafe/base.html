@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Пальма{% endblock %}</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+   <style>
+    body { font-family: 'Montserrat', sans-serif; transition: background-color 0.3s, color 0.3s; }
+    
+    /* ГЛОБАЛЬНЫЙ ФИКС ДЛЯ ТЕМНОЙ ТЕМЫ */
+    .dark .bg-white, 
+    .dark .bg-slate-50, 
+    .dark .bg-gray-50,
+    .dark .bg-slate-100 {
+        background-color: #1e293b !important;
+    }
+
+    .dark .text-slate-900, 
+    .dark .text-gray-900, 
+    .dark .text-slate-800, 
+    .dark .text-gray-800,
+    .dark .text-black {
+        color: #f8fafc !important;
+    }
+
+    .dark .text-slate-600, 
+    .dark .text-gray-600,
+    .dark .text-slate-500 {
+        color: #94a3b8 !important;
+    }
+
+    .dark input, .dark textarea, .dark select {
+        background-color: #334155 !important;
+        color: white !important;
+        border-color: #475569 !important;
+    }
+    .dark input::placeholder {
+        color: #94a3b8 !important;
+    }
+
+    .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6, .dark label {
+        color: #f8fafc !important;
+    }
+
+    .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .dark .glass { background: rgba(0, 0, 0, 0.2); }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 flex flex-col min-h-screen">
+<!-- БЛОК УВЕДОМЛЕНИЙ -->
+<div class="fixed top-24 right-5 z-[100] flex flex-col gap-3 pointer-events-none">
+    {% if messages %}
+        {% for message in messages %}
+        <div class="notification-toast pointer-events-auto min-w-[300px] flex items-center p-4 rounded-2xl border backdrop-blur-xl shadow-2xl transition-all duration-500 translate-x-12 opacity-0
+            {% if message.tags == 'success' %} bg-green-500/20 border-green-500/50 text-green-800 dark:text-green-200
+            {% elif message.tags == 'error' %} bg-red-500/20 border-red-500/50 text-red-800 dark:text-red-200
+            {% else %} bg-blue-500/20 border-blue-500/50 text-blue-800 dark:text-blue-200 {% endif %}"
+            id="toast-{{ forloop.counter }}">
+            
+            <div class="mr-3 text-lg">
+                {% if message.tags == 'success' %} ✅
+                {% elif message.tags == 'error' %} ⚠️
+                {% else %} ℹ️ {% endif %}
+            </div>
+            
+            <div class="font-bold text-sm mr-8">{{ message }}</div>
+            
+            <button onclick="closeToast('toast-{{ forloop.counter }}')" class="ml-auto text-current opacity-50 hover:opacity-100 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<script>
+    function closeToast(id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => el.remove(), 500);
+        }
+    }
+
+    // Автоматическое появление и исчезновение
+    document.addEventListener('DOMContentLoaded', () => {
+        const toasts = document.querySelectorAll('.notification-toast');
+        toasts.forEach((toast, index) => {
+            // Появление с задержкой
+            setTimeout(() => {
+                toast.classList.remove('translate-x-12', 'opacity-0');
+            }, index * 200 + 100);
+
+            // Авто-удаление через 5 секунд
+            setTimeout(() => {
+                closeToast(toast.id);
+            }, 5000);
+        });
+    });
+</script>
+    <!-- НАВИГАЦИЯ -->
+    <nav class="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                
+                <a href="{% url 'main' %}" class="text-xl font-black uppercase italic tracking-tighter">
+                    <span class="text-blue-600">Пальма</span><span class="dark:text-white text-slate-900">Тур</span>
+                </a>
+
+               <!-- меню для крутых -->
+<div class="hidden md:flex items-center space-x-8">
+    <a href="{% url 'main' %}" class="font-bold hover:text-blue-600 transition">Главная</a>
+    <a href="{% url 'tours' %}" class="font-bold hover:text-blue-600 transition">Туры</a>
+    
+    <!-- игра нах -->
+    <a href="{% url 'game_page' %}" class="font-bold hover:scale-105 transition-transform">🎮 ИГРАТЬ</a>
+
+    <button id="theme-toggle" class="p-2 rounded-xl bg-slate-100 dark:bg-white/10 transition">
+        <span id="theme-toggle-dark-icon" class="hidden text-amber-400">🌙</span>
+        <span id="theme-toggle-light-icon" class="hidden text-amber-500">☀️</span>
+    </button>
+
+    {% if user.is_authenticated %}
+        {% if user.is_staff %}
+        <a href="{% url 'manager_dashboard' %}" class="bg-orange-500 text-white px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest">Управление</a>
+        {% endif %}
+        
+        <div class="flex items-center space-x-4 border-l pl-6 border-slate-300 dark:border-white/10">
+            <a href="{% url 'profile' %}" class="font-bold">{{ user.username }}</a>
+            
+            <!-- КНОПКА ВЫХОДА -->
+            <form action="{% url 'logout' %}" method="post" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="text-red-500 font-bold hover:text-red-600 transition">Выйти</button>
+            </form>
+        </div>
+    {% else %}
+        <a href="{% url 'login' %}" class="font-bold">Войти</a>
+        <a href="{% url 'register' %}" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase hover:bg-blue-500 transition shadow-lg shadow-blue-500/20">Регистрация</a>
+    {% endif %}
+</div>
+
+                <!-- МОБИЛЬНАЯ ПАНЕЛЬ -->
+                <div class="md:hidden flex items-center space-x-4">
+                    <button id="theme-toggle-mobile" class="p-2 rounded-xl bg-slate-100 dark:bg-white/10">
+                        <span class="dark:hidden">🌙</span><span class="hidden dark:inline">☀️</span>
+                    </button>
+                    <button id="mobile-menu-button" class="text-slate-600 dark:text-slate-300">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- МОБИЛЬНОЕ МЕНЮ -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-white/10 px-4 py-6 space-y-4 shadow-2xl">
+            <a href="{% url 'main' %}" class="block font-bold py-2">Главная</a>
+            <a href="{% url 'tours' %}" class="block font-bold py-2">Туры</a>
+            
+            <hr class="border-slate-100 dark:border-white/5">
+
+            {% if user.is_authenticated %}
+                {% if user.is_staff %}
+                    <a href="{% url 'manager_dashboard' %}" class="block bg-orange-500 text-white text-center py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-orange-500/20">
+                        ⚙️ Панель управления
+                    </a>
+                {% endif %}
+                
+                <a href="{% url 'profile' %}" class="block font-bold py-2 text-blue-600">Профиль ({{ user.username }})</a>
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button class="w-full text-left font-bold py-2 text-red-500">Выйти</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="block font-bold py-2">Войти</a>
+                <a href="{% url 'register' %}" class="block bg-blue-600 text-white text-center py-4 rounded-2xl font-bold">Регистрация</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-slate-100 dark:bg-black/40 py-12 text-center text-sm border-t border-slate-200 dark:border-white/5">
+        <p class="opacity-50">&copy; 2026 Пальма. Все права защищены.</p>
+    </footer>
+
+    <script>
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeToggleBtnMobile = document.getElementById('theme-toggle-mobile');
+        const darkIcon = document.getElementById('theme-toggle-dark-icon');
+        const lightIcon = document.getElementById('theme-toggle-light-icon');
+        const mobileMenuBtn = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        function updateIcons() {
+            if (document.documentElement.classList.contains('dark')) {
+                lightIcon?.classList.remove('hidden');
+                darkIcon?.classList.add('hidden');
+            } else {
+                lightIcon?.classList.add('hidden');
+                darkIcon?.classList.remove('hidden');
+            }
+        }
+        updateIcons();
+
+        [themeToggleBtn, themeToggleBtnMobile].forEach(btn => {
+            if(!btn) return;
+            btn.addEventListener('click', function() {
+                document.documentElement.classList.toggle('dark');
+                localStorage.setItem('color-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+                updateIcons();
+            });
+        });
+
+        mobileMenuBtn?.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+    </script>
+</body>
+</html>

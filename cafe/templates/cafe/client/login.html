@@ -1,0 +1,51 @@
+{% extends 'cafe/base.html' %}
+
+{% block content %}
+<div class="relative min-h-[calc(100vh-80px)] flex items-center justify-center bg-cover bg-center px-4" 
+     style="background-image: url('/static/cafe/img/Мальдивы.jpg');">
+    
+    <div class="absolute inset-0 bg-black/30"></div>
+
+    <div class="relative z-10 w-full max-w-md p-10 rounded-3xl border border-white/30 bg-white/10 backdrop-blur-xl shadow-2xl">
+        
+        <h2 class="text-3xl font-bold text-white text-center mb-8 drop-shadow-md">С возвращением!</h2>
+        
+        <!-- БЛОК СООБЩЕНИЙ -->
+        {% if messages %}
+            <div class="mb-6 space-y-2">
+                {% for message in messages %}
+                    <div class="p-4 rounded-2xl border backdrop-blur-md text-sm font-medium 
+                        {% if message.tags == 'error' %} bg-red-500/20 border-red-500/50 text-red-200 
+                        {% else %} bg-green-500/20 border-green-500/50 text-green-200 {% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            {% for field in form %}
+                <div>
+                    <label class="block text-sm font-semibold text-white mb-2 ml-1">{{ field.label }}</label>
+                    <input type="{{ field.field.widget.input_type }}" 
+                           name="{{ field.name }}" 
+                           class="w-full px-5 py-3 rounded-2xl bg-white/20 border border-white/30 text-white placeholder-white/60 focus:ring-2 focus:ring-blue-400 outline-none transition backdrop-blur-sm"
+                           placeholder="Введите данные...">
+                </div>
+            {% endfor %}
+            
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl transition shadow-xl active:scale-95 duration-200">
+                Войти в аккаунт
+            </button>
+        </form>
+
+        <div class="mt-8 text-center">
+            <p class="text-white/80 text-sm">
+                Нет аккаунта? 
+                <a href="{% url 'register' %}" class="text-white font-bold hover:underline">Создать профиль</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

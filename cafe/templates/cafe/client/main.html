@@ -1,0 +1,157 @@
+{% extends 'cafe/base.html' %}
+
+{% block title %}Главная — ПальмаТур{% endblock %}
+
+{% block content %}
+<div class="space-y-12 md:space-y-20 pb-20 dark:bg-slate-900 transition-colors duration-300">
+
+    <!-- 1. ГЛАВНЫЙ ГЕРОЙ (HERO) С ПОИСКОМ -->
+    <section class="relative pt-12 md:pt-20 px-4">
+        <div class="max-w-7xl mx-auto text-center">
+            <h1 class="text-5xl md:text-7xl font-black uppercase italic tracking-tighter dark:text-white mb-6">
+                Путешествия, которые <span class="text-blue-600">запомнятся</span>
+            </h1>
+            <p class="text-slate-500 dark:text-slate-400 text-lg md:text-xl font-medium max-w-2xl mx-auto mb-10">
+                Лучшие туры по миру — быстро, удобно и выгодно. Найдите своё идеальное приключение за пару кликов.
+            </p>
+
+            <!-- Поиск -->
+            <form class="max-w-3xl mx-auto flex flex-col md:flex-row gap-2 bg-white dark:bg-white/5 p-2 rounded-[2rem] shadow-2xl border border-slate-100 dark:border-white/10" method="GET" action="{% url 'tours' %}">
+                <div class="flex-grow flex items-center px-6">
+                    <span class="text-xl mr-3">🔍</span>
+                    <input type="text" name="q" placeholder="Куда хотите поехать?" class="w-full py-4 bg-transparent outline-none font-bold text-slate-700 dark:text-white placeholder-slate-400">
+                </div>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition shadow-lg shadow-blue-500/30">
+                    Найти тур
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- 2. БАННЕР "РЯДОМ С ВАМИ" (Из твоего референса) -->
+    <section class="max-w-7xl mx-auto px-4">
+        <div class="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-600 to-amber-500 rounded-[3rem] p-8 md:p-16 flex items-center min-h-[400px] shadow-2xl shadow-orange-500/20">
+            <div class="relative z-10 max-w-xl">
+                <span class="inline-flex items-center bg-blue-600 text-white text-[10px] uppercase font-black px-4 py-1.5 rounded-full mb-6 tracking-[0.2em]">
+                    <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20"><path d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"></path></svg>
+                    Рядом с вами
+                </span>
+                <h2 class="text-6xl md:text-8xl font-black text-white mb-6 italic tracking-tighter leading-none">Москва</h2>
+                <p class="text-white/90 text-xl font-medium mb-10 leading-relaxed">Знаем тут все классные места и покажем их вам. От секретных крыш до уютных кофеен.</p>
+                <a href="{% url 'tours' %}" class="inline-block bg-white text-slate-900 px-12 py-5 rounded-[1.5rem] font-black uppercase text-sm hover:scale-105 transition-transform shadow-xl active:scale-95">
+                    Куда сходить?
+                </a>
+            </div>
+            
+            <!-- Декор картинка -->
+            <div class="absolute right-[-5%] top-[10%] hidden lg:block select-none pointer-events-none">
+                <div class="relative">
+                    <img src="https://images.unsplash.com/photo-1513326738677-b964603b136d?q=80&w=800&auto=format&fit=crop" 
+                         class="w-[450px] h-[450px] object-cover rounded-full border-[16px] border-white/10 shadow-2xl opacity-90">
+                    <div class="absolute -top-10 -left-10 text-7xl animate-bounce">📸</div>
+                </div>
+            </div>
+        </div>
+    </section>
+<!-- 2.5 БЛОК С ИГРОЙ -->
+    <section class="max-w-7xl mx-auto px-4">
+        <div class="relative overflow-hidden bg-slate-900 dark:bg-blue-900/20 rounded-[3rem] p-8 md:p-12 border border-white/10 shadow-2xl">
+            <!-- Декор фона -->
+            <div class="absolute top-0 right-0 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full"></div>
+            
+            <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                <div class="text-center md:text-left">
+                    <h2 class="text-3xl md:text-5xl font-black text-white uppercase italic italic tracking-tighter mb-4">
+                        Устали выбирать? <br><span class="text-blue-500">Поиграйте!</span>
+                    </h2>
+                    <p class="text-slate-400 text-lg font-medium max-w-md">
+                        Запустите наше интерактивное приключение на Unity и узнайте, какой тур подходит именно вам.
+                    </p>
+                </div>
+                
+                <div class="flex-shrink-0">
+                    <a href="{% url 'game_page' %}" class="group relative inline-flex items-center justify-center px-12 py-6 font-black uppercase tracking-widest text-white transition-all duration-200 bg-blue-600 rounded-2xl hover:bg-blue-500 hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/30">
+                        <span class="mr-3 text-2xl">🎮</span>
+                        ИГРАТЬ СЕЙЧАС
+                        <!-- Блик на кнопке -->
+                        <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- 3. ЧЕМ ЗАНЯТЬСЯ ЭТОЙ ВЕСНОЙ (Карточки туров) -->
+    <section class="max-w-7xl mx-auto px-4">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+            <div>
+                <h2 class="text-4xl md:text-5xl font-black italic uppercase tracking-tighter dark:text-white">
+                    Чем заняться <span class="text-blue-600">этой весной</span>
+                </h2>
+                <p class="text-slate-500 dark:text-slate-400 font-bold mt-2 uppercase text-xs tracking-widest">Лучшие предложения сезона</p>
+            </div>
+            <div class="flex gap-3">
+                <button class="p-4 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-white/10 transition shadow-sm">
+                    <svg class="w-5 h-5 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <button class="p-4 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-white/10 transition shadow-sm">
+                    <svg class="w-5 h-5 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Сетка карточек -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {% for tour in tours %}
+            <a href="{% url 'tour_detail' tour.id %}" class="group block">
+                <div class="relative aspect-[4/5] overflow-hidden rounded-[2.5rem] mb-6 shadow-lg">
+                    {% if tour.image %}
+                        <img src="{{ tour.image.url }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+                    {% else %}
+                        <div class="w-full h-full bg-slate-200 dark:bg-slate-800"></div>
+                    {% endif %}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition duration-300"></div>
+                </div>
+                <h3 class="font-black text-xl dark:text-white leading-tight mb-2 group-hover:text-blue-600 transition">{{ tour.title }}</h3>
+                <p class="text-slate-400 dark:text-slate-500 text-sm font-bold uppercase tracking-widest mb-3">{{ tour.location|default:"Направление" }}</p>
+                <div class="flex items-center text-slate-900 dark:text-white font-black">
+                    <span class="mr-2 rotate-45">✈️</span>
+                    <span>от {{ tour.price }} ₽</span>
+                </div>
+            </a>
+            {% empty %}
+            <p class="col-span-full text-center text-slate-500 py-10">Пока нет доступных туров...</p>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-16">
+            <a href="{% url 'tours' %}" class="inline-block bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-16 py-6 rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:scale-105 transition shadow-2xl">
+                Показать всё
+            </a>
+        </div>
+    </section>
+
+    <!-- 4. ПРЕИМУЩЕСТВА (FEATURES) -->
+    <section class="max-w-7xl mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="p-10 bg-blue-600 rounded-[3rem] text-white shadow-xl shadow-blue-600/20">
+                <div class="text-4xl mb-6">🌍</div>
+                <h3 class="text-2xl font-black mb-2 uppercase italic tracking-tighter">100+ направлений</h3>
+                <p class="opacity-80 font-medium">От заснеженных Альп до тропических пляжей Бали.</p>
+            </div>
+            <div class="p-10 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] shadow-sm">
+                <div class="text-4xl mb-6">💰</div>
+                <h3 class="text-2xl font-black mb-2 uppercase italic tracking-tighter dark:text-white text-slate-900">Лучшие цены</h3>
+                <p class="text-slate-500 dark:text-slate-400 font-medium">Работаем напрямую с отелями и гидами без посредников.</p>
+            </div>
+            <div class="p-10 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] shadow-sm">
+                <div class="text-4xl mb-6">⚡</div>
+                <h3 class="text-2xl font-black mb-2 uppercase italic tracking-tighter dark:text-white text-slate-900">Быстрое бронирование</h3>
+                <p class="text-slate-500 dark:text-slate-400 font-medium">Ваш билет в путешествие будет готов всего за 2 минуты.</p>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<!-- Удаляем старые стили, так как теперь используем Tailwind -->
+{% endblock %}

@@ -1,0 +1,2091 @@
+{% extends 'cafe/base.html' %}
+
+{% block title %}Создать тур - Админ панель{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <!-- Мобильный хедер -->
+    <div class="mobile-header">
+        <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+            <span class="menu-icon">☰</span>
+        </button>
+        <div class="mobile-title">
+            <h1>Создание тура</h1>
+            <div class="mobile-user-info">
+                <span class="mobile-username">{{ user.username }}</span>
+                <span class="mobile-role">Админ</span>
+            </div>
+        </div>
+        <div class="mobile-user">
+            <div class="mobile-avatar">{{ user.username|first|upper }}</div>
+        </div>
+    </div>
+
+    <!-- Админ навигация -->
+    <div class="admin-sidebar" id="mobileSidebar">
+        <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+        <div class="sidebar-content">
+            <div class="sidebar-header">
+                <h3 class="sidebar-title">Админ панель</h3>
+                <div class="sidebar-user">
+                    <div class="sidebar-avatar">{{ user.username|first|upper }}</div>
+                    <div class="sidebar-user-info">
+                        <div class="sidebar-username">{{ user.username }}</div>
+                        <div class="sidebar-role">Администратор</div>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="admin-menu">
+                <a href="{% url 'admin_dashboard' %}" class="menu-item {% if active_page == 'dashboard' %}active{% endif %}">
+                    <span class="menu-icon">📊</span>
+                    <span class="menu-title">Дашборд</span>
+                </a>
+                
+                <a href="{% url 'admin_tours' %}" class="menu-item {% if active_page == 'tours' %}active{% endif %}">
+                    <span class="menu-icon">🏝️</span>
+                    <span class="menu-title">Управление турами</span>
+                </a>
+                
+                <a href="{% url 'admin_bookings' %}" class="menu-item {% if active_page == 'bookings' %}active{% endif %}">
+                    <span class="menu-icon">📋</span>
+                    <span class="menu-title">Бронирования</span>
+                </a>
+                
+                <a href="{% url 'admin_clients' %}" class="menu-item">
+                    <span class="menu-icon">👥</span>
+                    <span class="menu-title">Клиенты</span>
+                </a>
+                
+                <a href="{% url 'admin_add_tour' %}" class="menu-item {% if active_page == 'add_tour' %}active{% endif %}">
+                    <span class="menu-icon">➕</span>
+                    <span class="menu-title">Создать тур</span>
+                </a>
+                
+                <a href="/admin/" target="_blank" class="menu-item">
+                    <span class="menu-icon">⚙️</span>
+                    <span class="menu-title">Django-админка</span>
+                </a>
+                
+                <hr class="menu-divider">
+                
+                <a href="{% url 'main' %}" class="menu-item">
+                    <span class="menu-icon">🏠</span>
+                    <span class="menu-title">На главную</span>
+                </a>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="admin-content">
+        <div class="content-header">
+            <div class="header-left">
+                <h1 class="page-title">Создание нового тура</h1>
+                <p class="page-subtitle">Заполните информацию о новом туре</p>
+            </div>
+            <div class="header-right">
+                <a href="{% url 'admin_tours' %}" class="btn-secondary">
+                    <span class="btn-icon">←</span>
+                    <span class="btn-text">Назад к списку</span>
+                </a>
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="admin-messages">
+            {% for message in messages %}
+            <div class="message message-{{ message.tags }}">
+                <span class="message-icon">
+                    {% if message.tags == 'success' %}✅
+                    {% elif message.tags == 'error' %}❌
+                    {% elif message.tags == 'warning' %}⚠️
+                    {% else %}💡{% endif %}
+                </span>
+                <span class="message-text">{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="add-tour-container">
+            <div class="form-preview-grid">
+                <!-- Форма -->
+                <div class="form-section">
+                    <div class="form-card">
+                        <div class="form-header">
+                            <h2 class="form-title">
+                                <span class="form-icon">📝</span>
+                                Основная информация
+                            </h2>
+                            <p class="form-subtitle">Заполните все обязательные поля</p>
+                        </div>
+
+                        <form method="post" class="tour-form" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                            <div class="form-grid">
+                                <!-- Название тура -->
+                                <div class="form-group full-width">
+                                    <label for="id_title" class="form-label">
+                                        <span class="label-icon">🏷️</span>
+                                        Название тура *
+                                        <span class="label-required">• обязательное поле</span>
+                                    </label>
+                                    {{ form.title }}
+                                    {% if form.title.errors %}
+                                    <div class="error-message">
+                                        <span class="error-icon">⚠️</span>
+                                        <span class="error-text">{{ form.title.errors }}</span>
+                                    </div>
+                                    {% endif %}
+                                    <div class="field-hint">
+                                        Придумайте привлекательное название для тура
+                                    </div>
+                                </div>
+                                
+                                <!-- Направление и Цена -->
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="id_destination" class="form-label">
+                                            <span class="label-icon">📍</span>
+                                            Направление *
+                                            <span class="label-required">• обязательное поле</span>
+                                        </label>
+                                        {{ form.destination }}
+                                        {% if form.destination.errors %}
+                                        <div class="error-message">
+                                            <span class="error-icon">⚠️</span>
+                                            <span class="error-text">{{ form.destination.errors }}</span>
+                                        </div>
+                                        {% endif %}
+                                        <div class="field-hint">
+                                            Город или страна назначения
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="id_price" class="form-label">
+                                            <span class="label-icon">💰</span>
+                                            Цена за человека *
+                                            <span class="label-required">• обязательное поле</span>
+                                        </label>
+                                        <div class="input-with-symbol">
+                                            {{ form.price }}
+                                            <span class="input-symbol">₽</span>
+                                        </div>
+                                        {% if form.price.errors %}
+                                        <div class="error-message">
+                                            <span class="error-icon">⚠️</span>
+                                            <span class="error-text">{{ form.price.errors }}</span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Длительность и Изображение -->
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="id_duration_days" class="form-label">
+                                            <span class="label-icon">⏱️</span>
+                                            Длительность *
+                                            <span class="label-required">• обязательное поле</span>
+                                        </label>
+                                        <div class="input-with-symbol">
+                                            {{ form.duration_days }}
+                                            <span class="input-symbol">дней</span>
+                                        </div>
+                                        {% if form.duration_days.errors %}
+                                        <div class="error-message">
+                                            <span class="error-icon">⚠️</span>
+                                            <span class="error-text">{{ form.duration_days.errors }}</span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="id_image" class="form-label">
+                                            <span class="label-icon">🖼️</span>
+                                            Изображение тура
+                                        </label>
+                                        <div class="file-upload">
+                                            {{ form.image }}
+                                            <div class="upload-placeholder">
+                                                <span class="upload-icon">📁</span>
+                                                <span class="upload-text">Загрузить изображение</span>
+                                            </div>
+                                        </div>
+                                        {% if form.image.errors %}
+                                        <div class="error-message">
+                                            <span class="error-icon">⚠️</span>
+                                            <span class="error-text">{{ form.image.errors }}</span>
+                                        </div>
+                                        {% endif %}
+                                        <div class="field-hint">
+                                            Поддерживаемые форматы: JPG, PNG, WebP
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Описание -->
+                                <div class="form-group full-width">
+                                    <label for="id_description" class="form-label">
+                                        <span class="label-icon">📄</span>
+                                        Описание тура *
+                                        <span class="label-required">• обязательное поле</span>
+                                        <span class="char-counter" id="charCounter">0/2000</span>
+                                    </label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                    <div class="error-message">
+                                        <span class="error-icon">⚠️</span>
+                                        <span class="error-text">{{ form.description.errors }}</span>
+                                    </div>
+                                    {% endif %}
+                                    <div class="field-hint">
+                                        Подробно опишите тур, его особенности и преимущества
+                                    </div>
+                                </div>
+                                
+                                <!-- Статус -->
+                                <div class="form-group full-width">
+                                    <div class="checkbox-group">
+                                        {{ form.available }}
+                                        <label for="id_available" class="checkbox-label">
+                                            <span class="checkbox-custom"></span>
+                                            <span class="checkbox-text">
+                                                <span class="checkbox-title">Доступен для бронирования</span>
+                                                <span class="checkbox-description">Тур будет виден пользователям на сайте</span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Кнопки -->
+                                <div class="form-group full-width">
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn-primary">
+                                            <span class="btn-icon">🚀</span>
+                                            <span class="btn-text">Опубликовать тур</span>
+                                        </button>
+                                        <button type="button" class="btn-secondary" onclick="saveAsDraft()">
+                                            <span class="btn-icon">💾</span>
+                                            <span class="btn-text">Сохранить черновик</span>
+                                        </button>
+                                        <a href="{% url 'admin_tours' %}" class="btn-cancel">
+                                            Отмена
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Предпросмотр -->
+                <div class="preview-section">
+                    <div class="preview-card">
+                        <div class="preview-header">
+                            <h2 class="preview-title">
+                                <span class="preview-icon">👁️</span>
+                                Предпросмотр тура
+                            </h2>
+                            <p class="preview-subtitle">Так будет выглядеть тур на сайте</p>
+                        </div>
+                        
+                        <div class="preview-content">
+                            <!-- Карточка тура -->
+                            <div class="tour-preview-card">
+                                <div class="preview-image" id="previewImage">
+                                    <div class="image-placeholder">
+                                        <span class="placeholder-icon">🖼️</span>
+                                        <span class="placeholder-text">Изображение тура</span>
+                                        <div class="preview-price" id="previewPrice">0 ₽</div>
+                                        <div class="preview-duration" id="previewDuration">0 дней</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="preview-details">
+                                    <div class="preview-header-info">
+                                        <h3 class="preview-tour-title" id="previewTitle">Название тура</h3>
+                                        <div class="preview-status">
+                                            <span class="status-badge status-active" id="previewStatus">
+                                                <span class="status-dot"></span>
+                                                Активен
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <p class="preview-description" id="previewDescription">
+                                        Здесь будет краткое описание тура...
+                                    </p>
+                                    
+                                    <div class="preview-meta">
+                                        <div class="meta-item">
+                                            <span class="meta-icon">📍</span>
+                                            <span class="meta-text" id="previewDestination">Направление</span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <span class="meta-icon">⏱️</span>
+                                            <span class="meta-text" id="previewDurationText">0 дней</span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <span class="meta-icon">💰</span>
+                                            <span class="meta-text" id="previewPriceText">от 0 ₽</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="preview-actions">
+                                        <a href="#" class="btn-preview btn-detail">
+                                            <span class="btn-icon">👁️</span>
+                                            Подробнее
+                                        </a>
+                                        <a href="#" class="btn-preview btn-book">
+                                            <span class="btn-icon">📅</span>
+                                            Забронировать
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Информация в режиме реального времени -->
+                            <div class="live-preview">
+                                <h4>
+                                    <span class="live-icon">⚡</span>
+                                    Информация обновляется в реальном времени
+                                </h4>
+                                <div class="live-stats">
+                                    <div class="live-stat">
+                                        <div class="stat-info">
+                                            <span class="stat-label">Символов в описании:</span>
+                                            <span class="stat-value" id="charCount">0</span>
+                                        </div>
+                                        <div class="stat-progress">
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" id="progressFill"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="live-stat">
+                                        <div class="stat-info">
+                                            <span class="stat-label">Статус:</span>
+                                            <span class="stat-value" id="statusText">Активен</span>
+                                        </div>
+                                        <div class="stat-status">
+                                            <span class="status-indicator active"></span>
+                                        </div>
+                                    </div>
+                                    <div class="live-stat">
+                                        <div class="stat-info">
+                                            <span class="stat-label">Цена за человека:</span>
+                                            <span class="stat-value" id="priceValue">0 ₽</span>
+                                        </div>
+                                        <div class="stat-trend">
+                                            <span class="trend-icon">💰</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Советы по заполнению -->
+                            <div class="creation-tips">
+                                <h5>
+                                    <span class="tips-icon">💡</span>
+                                    Советы по созданию тура
+                                </h5>
+                                <ul class="tips-list">
+                                    <li>Используйте привлекательные и понятные названия</li>
+                                    <li>Добавляйте качественные изображения</li>
+                                    <li>Детально описывайте преимущества тура</li>
+                                    <li>Указывайте точные цены и сроки</li>
+                                    <li>Проверяйте корректность всех данных</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Элементы формы
+    const titleInput = document.getElementById('id_title');
+    const descriptionInput = document.getElementById('id_description');
+    const priceInput = document.getElementById('id_price');
+    const durationInput = document.getElementById('id_duration_days');
+    const destinationInput = document.getElementById('id_destination');
+    const availableInput = document.getElementById('id_available');
+    const charCountElement = document.getElementById('charCount');
+    const charCounter = document.getElementById('charCounter');
+    const progressFill = document.getElementById('progressFill');
+    
+    // Элементы предпросмотра
+    const previewTitle = document.getElementById('previewTitle');
+    const previewDescription = document.getElementById('previewDescription');
+    const previewPrice = document.getElementById('previewPrice');
+    const previewPriceText = document.getElementById('previewPriceText');
+    const previewDuration = document.getElementById('previewDuration');
+    const previewDurationText = document.getElementById('previewDurationText');
+    const previewDestination = document.getElementById('previewDestination');
+    const previewStatus = document.getElementById('previewStatus');
+    const statusText = document.getElementById('statusText');
+    const priceValue = document.getElementById('priceValue');
+    
+    // Обработчик загрузки изображения
+    const imageInput = document.getElementById('id_image');
+    const previewImage = document.getElementById('previewImage');
+    
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.innerHTML = `
+                    <img src="${e.target.result}" alt="Предпросмотр изображения" class="preview-image-loaded">
+                    <div class="preview-price" id="previewPrice">0 ₽</div>
+                    <div class="preview-duration" id="previewDuration">0 дней</div>
+                `;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    function updatePreview() {
+        // Название
+        const title = titleInput.value.trim();
+        previewTitle.textContent = title || 'Название тура';
+        previewTitle.className = title ? 'preview-tour-title' : 'preview-tour-title empty';
+        
+        // Описание
+        const description = descriptionInput.value.trim();
+        const displayDescription = description || 'Здесь будет краткое описание тура...';
+        previewDescription.textContent = displayDescription.length > 120 ? 
+            displayDescription.substring(0, 120) + '...' : displayDescription;
+        previewDescription.className = description ? 'preview-description' : 'preview-description empty';
+        
+        // Подсчет символов и прогресс
+        const charCount = description.length;
+        charCountElement.textContent = charCount;
+        charCounter.textContent = `${charCount}/2000`;
+        
+        const progress = Math.min((charCount / 2000) * 100, 100);
+        progressFill.style.width = `${progress}%`;
+        progressFill.className = progress < 50 ? 'progress-fill low' : 
+                                 progress < 80 ? 'progress-fill medium' : 'progress-fill high';
+        
+        // Цена
+        const price = priceInput.value || '0';
+        const formattedPrice = parseFloat(price).toLocaleString('ru-RU');
+        previewPrice.textContent = formattedPrice + ' ₽';
+        previewPriceText.textContent = 'от ' + formattedPrice + ' ₽';
+        priceValue.textContent = formattedPrice + ' ₽';
+        
+        // Длительность
+        const duration = durationInput.value || '0';
+        previewDuration.textContent = duration + ' дней';
+        previewDurationText.textContent = duration + ' дней';
+        
+        // Направление
+        const destination = destinationInput.value.trim();
+        previewDestination.textContent = destination || 'Направление';
+        previewDestination.className = destination ? 'meta-text' : 'meta-text empty';
+        
+        // Статус
+        const isAvailable = availableInput.checked;
+        if (isAvailable) {
+            previewStatus.innerHTML = '<span class="status-dot"></span> Активен';
+            previewStatus.className = 'status-badge status-active';
+            statusText.textContent = 'Активен';
+            statusText.className = 'stat-value active';
+        } else {
+            previewStatus.innerHTML = '<span class="status-dot"></span> Неактивен';
+            previewStatus.className = 'status-badge status-inactive';
+            statusText.textContent = 'Неактивен';
+            statusText.className = 'stat-value inactive';
+        }
+        
+        // Валидация полей
+        validateField(titleInput, title.length > 0);
+        validateField(descriptionInput, description.length > 0);
+        validateField(priceInput, parseFloat(price) > 0);
+        validateField(durationInput, parseInt(duration) > 0);
+        validateField(destinationInput, destination.length > 0);
+    }
+    
+    function validateField(input, isValid) {
+        if (isValid) {
+            input.classList.remove('invalid');
+            input.classList.add('valid');
+        } else {
+            input.classList.remove('valid');
+            input.classList.add('invalid');
+        }
+    }
+    
+    // Обновление при изменении
+    [titleInput, descriptionInput, priceInput, durationInput, destinationInput, availableInput].forEach(input => {
+        if (input.type === 'checkbox') {
+            input.addEventListener('change', updatePreview);
+        } else {
+            input.addEventListener('input', updatePreview);
+        }
+    });
+    
+    // Форматирование цены
+    priceInput.addEventListener('blur', function(e) {
+        let value = e.target.value.replace(/[^\d.]/g, '');
+        const numValue = parseFloat(value);
+        if (!isNaN(numValue)) {
+            e.target.value = numValue.toFixed(2);
+        } else {
+            e.target.value = '0.00';
+        }
+        updatePreview();
+    });
+    
+    // Форматирование длительности
+    durationInput.addEventListener('blur', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (!value || parseInt(value) < 1) {
+            value = '1';
+        }
+        e.target.value = value;
+        updatePreview();
+    });
+    
+    // Инициализация
+    updatePreview();
+});
+
+function saveAsDraft() {
+    const form = document.querySelector('.tour-form');
+    const draftInput = document.createElement('input');
+    draftInput.type = 'hidden';
+    draftInput.name = 'draft';
+    draftInput.value = 'true';
+    form.appendChild(draftInput);
+    form.submit();
+}
+
+// Управление мобильным меню
+function toggleMobileMenu() {
+    const sidebar = document.getElementById('mobileSidebar');
+    sidebar.classList.toggle('active');
+    document.body.classList.toggle('menu-open');
+}
+
+// Закрытие меню при клике на ссылку
+document.querySelectorAll('.admin-menu a').forEach(link => {
+    link.addEventListener('click', () => {
+        const sidebar = document.getElementById('mobileSidebar');
+        if (sidebar.classList.contains('active')) {
+            toggleMobileMenu();
+        }
+    });
+});
+
+// Автоматическое сохранение каждые 30 секунд
+let autoSaveTimer;
+function startAutoSave() {
+    autoSaveTimer = setInterval(() => {
+        const form = document.querySelector('.tour-form');
+        const formData = new FormData(form);
+        
+        // Отправляем AJAX запрос для сохранения
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        }).then(response => {
+            if (response.ok) {
+                console.log('Автосохранение выполнено');
+            }
+        });
+    }, 30000);
+}
+
+// Запускаем автосохранение после загрузки
+window.addEventListener('load', startAutoSave);
+</script>
+
+<style>
+/* Общие переменные */
+:root {
+    --primary-color: #2C5277;
+    --secondary-color: #4A90E2;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --danger-color: #e74c3c;
+    --dark-color: #2c3e50;
+    --gray-color: #7f8c8d;
+    --light-gray: #f8f9fa;
+    --border-color: #e0e0e0;
+    --shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    --border-radius: 12px;
+    --card-radius: 16px;
+}
+
+.admin-container {
+    display: flex;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+    position: relative;
+}
+
+/* Мобильный хедер */
+.mobile-header {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: white;
+    box-shadow: 0 2px 15px rgba(44, 82, 119, 0.1);
+    padding: 12px 16px;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(10px);
+}
+
+.mobile-menu-toggle {
+    background: var(--primary-color);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle:hover {
+    background: var(--secondary-color);
+    transform: scale(1.05);
+}
+
+.mobile-title {
+    flex: 1;
+    margin: 0 15px;
+}
+
+.mobile-title h1 {
+    font-size: 1.1rem;
+    margin: 0;
+    color: var(--dark-color);
+    font-weight: 600;
+}
+
+.mobile-user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.mobile-username {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--dark-color);
+}
+
+.mobile-role {
+    font-size: 0.75rem;
+    color: var(--gray-color);
+    background: var(--light-gray);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-top: 2px;
+}
+
+.mobile-user {
+    display: flex;
+    align-items: center;
+}
+
+.mobile-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Админ навигация */
+.admin-sidebar {
+    width: 280px;
+    background: white;
+    box-shadow: 2px 0 15px rgba(44, 82, 119, 0.08);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-right: 1px solid var(--border-color);
+}
+
+.sidebar-content {
+    height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    backdrop-filter: blur(3px);
+}
+
+.sidebar-header {
+    padding: 30px 25px 20px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.sidebar-title {
+    font-size: 1.3rem;
+    margin: 0 0 20px 0;
+    font-weight: 600;
+    text-align: center;
+    opacity: 0.95;
+}
+
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-avatar {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    flex-shrink: 0;
+}
+
+.sidebar-user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.sidebar-username {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-role {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.admin-menu {
+    padding: 20px 0;
+    flex: 1;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 16px 25px;
+    text-decoration: none;
+    color: var(--dark-color);
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+    margin: 0 10px;
+    border-radius: 10px;
+    position: relative;
+}
+
+.menu-item:hover {
+    background: var(--light-gray);
+    color: var(--primary-color);
+    transform: translateX(5px);
+}
+
+.menu-item.active {
+    background: rgba(44, 82, 119, 0.1);
+    color: var(--primary-color);
+    border-left-color: var(--primary-color);
+    font-weight: 500;
+}
+
+.menu-icon {
+    font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.menu-title {
+    font-weight: 500;
+    font-size: 0.95rem;
+    flex: 1;
+}
+
+.menu-divider {
+    margin: 20px 25px;
+    border: none;
+    border-top: 1px solid var(--border-color);
+    opacity: 0.5;
+}
+
+/* Основной контент */
+.admin-content {
+    flex: 1;
+    margin-left: 280px;
+    padding: 30px;
+    max-width: calc(100% - 280px);
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.header-left {
+    flex: 1;
+    min-width: 300px;
+}
+
+.page-title {
+    font-size: 2rem;
+    color: var(--dark-color);
+    margin: 0 0 8px 0;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.page-subtitle {
+    color: var(--gray-color);
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+/* Кнопки */
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    background: linear-gradient(135deg, var(--success-color) 0%, #2ecc71 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(39, 174, 96, 0.2);
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(39, 174, 96, 0.3);
+    background: linear-gradient(135deg, #219653 0%, var(--success-color) 100%);
+}
+
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    background: white;
+    color: var(--dark-color);
+    text-decoration: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+}
+
+.btn-secondary:hover {
+    background: var(--light-gray);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 25px;
+    background: white;
+    color: var(--gray-color);
+    text-decoration: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    border: 2px solid var(--border-color);
+    cursor: pointer;
+    flex: 1;
+}
+
+.btn-cancel:hover {
+    background: var(--light-gray);
+    border-color: var(--gray-color);
+}
+
+.btn-icon {
+    font-size: 1.1rem;
+}
+
+/* Сообщения */
+.admin-messages {
+    margin-bottom: 25px;
+}
+
+.message {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 18px 24px;
+    border-radius: var(--border-radius);
+    margin-bottom: 15px;
+    font-weight: 500;
+    border-left: 4px solid;
+    background: white;
+    box-shadow: var(--shadow);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message-success {
+    border-left-color: var(--success-color);
+    background: linear-gradient(90deg, rgba(39, 174, 96, 0.05) 0%, rgba(39, 174, 96, 0.02) 100%);
+}
+
+.message-error {
+    border-left-color: var(--danger-color);
+    background: linear-gradient(90deg, rgba(231, 76, 60, 0.05) 0%, rgba(231, 76, 60, 0.02) 100%);
+}
+
+.message-warning {
+    border-left-color: var(--warning-color);
+    background: linear-gradient(90deg, rgba(243, 156, 18, 0.05) 0%, rgba(243, 156, 18, 0.02) 100%);
+}
+
+.message-info {
+    border-left-color: var(--secondary-color);
+    background: linear-gradient(90deg, rgba(74, 144, 226, 0.05) 0%, rgba(74, 144, 226, 0.02) 100%);
+}
+
+.message-icon {
+    font-size: 1.3rem;
+}
+
+.message-text {
+    flex: 1;
+    font-size: 0.95rem;
+}
+
+/* Контейнер добавления тура */
+.add-tour-container {
+    margin-top: 30px;
+}
+
+.form-preview-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 30px;
+}
+
+/* Карточка формы */
+.form-card {
+    background: white;
+    border-radius: var(--card-radius);
+    padding: 30px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    animation: cardAppear 0.4s ease;
+}
+
+@keyframes cardAppear {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.form-header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.form-title {
+    font-size: 1.5rem;
+    color: var(--dark-color);
+    margin: 0 0 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.form-icon {
+    font-size: 1.3rem;
+}
+
+.form-subtitle {
+    color: var(--gray-color);
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* Форма */
+.tour-form {
+    margin-top: 10px;
+}
+
+.form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--dark-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+.label-icon {
+    font-size: 1rem;
+    color: var(--primary-color);
+}
+
+.label-required {
+    font-size: 0.8rem;
+    color: var(--danger-color);
+    font-weight: 400;
+}
+
+.char-counter {
+    font-size: 0.8rem;
+    color: var(--gray-color);
+    font-weight: 400;
+}
+
+/* Поля ввода */
+.tour-form input,
+.tour-form textarea,
+.tour-form select {
+    padding: 16px 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    outline: none;
+    background: var(--light-gray);
+    font-family: inherit;
+    width: 100%;
+}
+
+.tour-form input:focus,
+.tour-form textarea:focus,
+.tour-form select:focus {
+    border-color: var(--primary-color);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(44, 82, 119, 0.1);
+}
+
+.tour-form input.valid,
+.tour-form textarea.valid {
+    border-color: var(--success-color);
+    background: rgba(39, 174, 96, 0.02);
+}
+
+.tour-form input.invalid,
+.tour-form textarea.invalid {
+    border-color: var(--danger-color);
+    background: rgba(231, 76, 60, 0.02);
+}
+
+.tour-form textarea {
+    min-height: 180px;
+    resize: vertical;
+    line-height: 1.6;
+    font-family: inherit;
+}
+
+/* Поле с символом */
+.input-with-symbol {
+    position: relative;
+}
+
+.input-symbol {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-color);
+    font-size: 0.95rem;
+    pointer-events: none;
+}
+
+.input-with-symbol input {
+    padding-right: 50px;
+}
+
+/* Загрузка файлов */
+.file-upload {
+    position: relative;
+    cursor: pointer;
+}
+
+.file-upload input[type="file"] {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.upload-placeholder {
+    padding: 16px 20px;
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    background: var(--light-gray);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    min-height: 60px;
+}
+
+.file-upload:hover .upload-placeholder {
+    border-color: var(--primary-color);
+    background: rgba(44, 82, 119, 0.02);
+}
+
+.upload-icon {
+    font-size: 1.5rem;
+    color: var(--gray-color);
+}
+
+.upload-text {
+    color: var(--gray-color);
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+/* Ошибки */
+.error-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: var(--danger-color);
+    font-size: 0.85rem;
+    margin-top: 5px;
+    padding: 10px;
+    background: rgba(231, 76, 60, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid var(--danger-color);
+}
+
+.error-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.error-text {
+    flex: 1;
+}
+
+.field-hint {
+    color: var(--gray-color);
+    font-size: 0.85rem;
+    margin-top: 5px;
+    font-style: italic;
+    line-height: 1.4;
+}
+
+/* Чекбокс */
+.checkbox-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 20px;
+    background: var(--light-gray);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.checkbox-group:hover {
+    background: #e9ecef;
+    border-color: var(--border-color);
+}
+
+.checkbox-group input[type="checkbox"] {
+    display: none;
+}
+
+.checkbox-custom {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.checkbox-group input[type="checkbox"]:checked + .checkbox-label .checkbox-custom {
+    background: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.checkbox-group input[type="checkbox"]:checked + .checkbox-label .checkbox-custom::after {
+    content: '✓';
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    cursor: pointer;
+    flex: 1;
+}
+
+.checkbox-title {
+    font-weight: 600;
+    color: var(--dark-color);
+    font-size: 1rem;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.checkbox-description {
+    font-size: 0.9rem;
+    color: var(--gray-color);
+    line-height: 1.4;
+}
+
+/* Кнопки формы */
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+    padding-top: 25px;
+    border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.form-actions .btn-primary,
+.form-actions .btn-secondary {
+    flex: 1;
+    min-width: 200px;
+}
+
+.form-actions .btn-cancel {
+    flex: none;
+    min-width: 150px;
+}
+
+/* Предпросмотр */
+.preview-card {
+    background: white;
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    height: fit-content;
+    position: sticky;
+    top: 30px;
+    border: 1px solid var(--border-color);
+    animation: cardAppear 0.4s ease 0.1s backwards;
+}
+
+.preview-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    padding: 25px;
+}
+
+.preview-title {
+    font-size: 1.4rem;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.preview-icon {
+    font-size: 1.2rem;
+}
+
+.preview-subtitle {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+.preview-content {
+    padding: 25px;
+}
+
+/* Карточка предпросмотра тура */
+.tour-preview-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    margin-bottom: 25px;
+}
+
+.tour-preview-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.preview-image {
+    height: 200px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.preview-image-loaded {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 20px;
+}
+
+.placeholder-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+    opacity: 0.8;
+}
+
+.placeholder-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.preview-price,
+.preview-duration {
+    position: absolute;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    font-weight: 600;
+    color: white;
+    font-size: 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    z-index: 2;
+}
+
+.preview-price {
+    top: 15px;
+    left: 15px;
+    background: rgba(39, 174, 96, 0.85);
+}
+
+.preview-duration {
+    top: 15px;
+    right: 15px;
+    background: rgba(74, 144, 226, 0.85);
+}
+
+.preview-details {
+    padding: 20px;
+}
+
+.preview-header-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.preview-tour-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--dark-color);
+    margin: 0;
+    line-height: 1.3;
+    flex: 1;
+    word-break: break-word;
+}
+
+.preview-tour-title.empty {
+    color: var(--gray-color);
+    font-style: italic;
+}
+
+.preview-status {
+    flex-shrink: 0;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-active {
+    background: rgba(39, 174, 96, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(39, 174, 96, 0.2);
+}
+
+.status-inactive {
+    background: rgba(231, 76, 60, 0.1);
+    color: var(--danger-color);
+    border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-active .status-dot {
+    background: var(--success-color);
+}
+
+.status-inactive .status-dot {
+    background: var(--danger-color);
+}
+
+.preview-description {
+    color: var(--gray-color);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0 0 20px 0;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.preview-description.empty {
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.preview-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.meta-icon {
+    color: var(--gray-color);
+    font-size: 1.1rem;
+    width: 24px;
+    flex-shrink: 0;
+}
+
+.meta-text {
+    color: var(--dark-color);
+    font-size: 0.95rem;
+    word-break: break-word;
+    flex: 1;
+}
+
+.meta-text.empty {
+    color: var(--gray-color);
+    font-style: italic;
+}
+
+.preview-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-preview {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.btn-preview .btn-icon {
+    font-size: 1rem;
+}
+
+.btn-detail {
+    background: var(--light-gray);
+    color: var(--primary-color);
+    border: 1px solid var(--border-color);
+}
+
+.btn-detail:hover {
+    background: #e3f2fd;
+    transform: translateY(-2px);
+}
+
+.btn-book {
+    background: var(--success-color);
+    color: white;
+    border: 1px solid var(--success-color);
+}
+
+.btn-book:hover {
+    background: #219653;
+    transform: translateY(-2px);
+}
+
+/* Превью в реальном времени */
+.live-preview {
+    margin-top: 25px;
+    padding: 20px;
+    background: var(--light-gray);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+}
+
+.live-preview h4 {
+    font-size: 1rem;
+    color: var(--dark-color);
+    margin: 0 0 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.live-icon {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+}
+
+.live-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.live-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-label {
+    color: var(--gray-color);
+    font-size: 0.9rem;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: var(--dark-color);
+    font-size: 0.95rem;
+}
+
+.stat-value.active {
+    color: var(--success-color);
+}
+
+.stat-value.inactive {
+    color: var(--danger-color);
+}
+
+.stat-progress {
+    width: 100px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.progress-fill.low {
+    background: var(--danger-color);
+    width: 33%;
+}
+
+.progress-fill.medium {
+    background: var(--warning-color);
+    width: 66%;
+}
+
+.progress-fill.high {
+    background: var(--success-color);
+    width: 100%;
+}
+
+.stat-status {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.status-indicator.active {
+    background: var(--success-color);
+}
+
+.status-indicator.inactive {
+    background: var(--danger-color);
+}
+
+.stat-trend {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.trend-icon {
+    font-size: 1.1rem;
+    color: var(--warning-color);
+}
+
+/* Советы по созданию */
+.creation-tips {
+    margin-top: 25px;
+    padding: 20px;
+    background: rgba(44, 82, 119, 0.05);
+    border-radius: 10px;
+    border: 1px solid rgba(44, 82, 119, 0.1);
+}
+
+.creation-tips h5 {
+    font-size: 1rem;
+    color: var(--dark-color);
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.tips-icon {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+}
+
+.tips-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tips-list li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--gray-color);
+    line-height: 1.4;
+}
+
+.tips-list li:before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.tips-list li:last-child {
+    margin-bottom: 0;
+}
+
+/* Адаптивность для планшетов (768px - 1024px) */
+@media (max-width: 1024px) {
+    .admin-content {
+        margin-left: 0;
+        max-width: 100%;
+        padding: 20px;
+    }
+    
+    .form-preview-grid {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+    
+    .preview-card {
+        position: static;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn-primary,
+    .form-actions .btn-secondary,
+    .form-actions .btn-cancel {
+        width: 100%;
+        min-width: unset;
+    }
+}
+
+/* Адаптивность для мобильных устройств (до 768px) */
+@media (max-width: 768px) {
+    .mobile-header {
+        display: flex;
+    }
+    
+    .admin-sidebar {
+        transform: translateX(-100%);
+        width: 85%;
+        max-width: 320px;
+    }
+    
+    .admin-sidebar.active {
+        transform: translateX(0);
+    }
+    
+    .admin-sidebar.active + .sidebar-overlay {
+        display: block;
+    }
+    
+    body.menu-open {
+        overflow: hidden;
+    }
+    
+    .admin-content {
+        padding: 80px 16px 20px;
+    }
+    
+    .content-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+    
+    .header-left {
+        min-width: unset;
+    }
+    
+    .page-title {
+        font-size: 1.6rem;
+    }
+    
+    .page-subtitle {
+        font-size: 1rem;
+    }
+    
+    .form-card {
+        padding: 20px;
+    }
+    
+    .form-header {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+    }
+    
+    .form-title {
+        font-size: 1.3rem;
+    }
+    
+    .preview-card {
+        padding: 0;
+    }
+    
+    .preview-header {
+        padding: 20px;
+    }
+    
+    .preview-content {
+        padding: 20px;
+    }
+    
+    .preview-image {
+        height: 180px;
+    }
+    
+    .preview-tour-title {
+        font-size: 1.2rem;
+    }
+    
+    .preview-actions {
+        flex-direction: column;
+    }
+    
+    .btn-preview {
+        width: 100%;
+    }
+    
+    .tour-form input,
+    .tour-form textarea,
+    .tour-form select {
+        padding: 14px 16px;
+        font-size: 16px;
+    }
+    
+    .form-actions {
+        padding-top: 20px;
+        gap: 12px;
+    }
+    
+    .btn-primary,
+    .btn-secondary,
+    .btn-cancel {
+        padding: 16px 20px;
+        font-size: 1rem;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .preview-price,
+    .preview-duration {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Адаптивность для очень маленьких экранов (до 480px) */
+@media (max-width: 480px) {
+    .admin-content {
+        padding: 70px 12px 16px;
+    }
+    
+    .form-card {
+        padding: 16px;
+    }
+    
+    .preview-header {
+        padding: 16px;
+    }
+    
+    .preview-content {
+        padding: 16px;
+    }
+    
+    .preview-image {
+        height: 160px;
+    }
+    
+    .meta-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .meta-icon {
+        width: auto;
+    }
+    
+    .live-preview,
+    .creation-tips {
+        padding: 16px;
+    }
+    
+    .form-label {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .label-required {
+        align-self: flex-end;
+    }
+}
+
+/* Портретные мобильные устройства */
+@media (max-width: 768px) and (orientation: portrait) {
+    .admin-sidebar {
+        width: 90%;
+    }
+    
+    .mobile-header {
+        padding: 10px 14px;
+    }
+    
+    .mobile-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Ландшафтные мобильные устройства */
+@media (max-width: 1024px) and (orientation: landscape) {
+    .admin-content {
+        padding-top: 20px;
+    }
+    
+    .mobile-header {
+        padding: 8px 16px;
+    }
+    
+    .mobile-title h1 {
+        font-size: 1rem;
+    }
+    
+    .form-preview-grid {
+        grid-template-columns: 1fr 350px;
+    }
+}
+</style>
+{% endblock %}

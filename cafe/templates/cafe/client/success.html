@@ -1,0 +1,8 @@
+{% extends 'cafe/base.html' %}
+{% block content %}
+<div class="text-center py-20">
+    <h1 class="text-4xl font-bold text-green-600">Успешно!</h1>
+    <p class="py-4 text-slate-600">Спасибо, {{ booking.client_name }}. Ваша заявка на {{ tour.title }} принята.</p>
+    <a href="{% url 'main' %}" class="text-blue-600 underline">Вернуться к турам</a>
+</div>
+{% endblock %}

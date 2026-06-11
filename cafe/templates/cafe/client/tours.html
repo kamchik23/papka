@@ -1,0 +1,85 @@
+{% extends 'cafe/base.html' %}
+
+{% block title %}Туры{% endblock %}
+
+{% block content %}
+
+<!-- FILTERS -->
+<aside class="filters">
+    <h3>Фильтры</h3>
+
+    <form method="GET">
+
+        <input type="text" name="q" placeholder="Поиск тура..." value="{{ request.GET.q }}">
+
+        <div class="form-group">
+            <label>Цена от</label>
+            <input type="number" name="min_price" placeholder="0" value="{{ request.GET.min_price }}">
+        </div>
+
+        <div class="form-group">
+            <label>Цена до</label>
+            <input type="number" name="max_price" placeholder="100000" value="{{ request.GET.max_price }}">
+        </div>
+
+        <button class="btn" type="submit">Применить</button>
+    </form>
+</aside>
+
+<!-- TOURS -->
+<main class="tours">
+
+    <h2>Доступные туры</h2>
+
+    <div class="tour-grid">
+
+        {% for tour in tours %}
+
+        <div class="tour-card">
+
+            <!-- IMAGE -->
+            {% if tour.image %}
+                <img src="{{ tour.image.url }}" class="tour-img">
+            {% else %}
+                <div class="tour-img placeholder"></div>
+            {% endif %}
+
+            <div class="tour-body">
+                <h3>
+                    <a href="{% url 'tour_detail' tour.slug %}">
+                        {{ tour.title }}
+                    </a>
+                </h3>
+
+                <p class="desc">
+                    {{ tour.description|truncatechars:120 }}
+                </p>
+
+                <div class="tour-footer">
+
+                    <div class="price">
+                        💰 {{ tour.price }} ₽
+                    </div>
+
+                    <div class="actions">
+                        <a href="{% url 'tour_detail' tour.slug %}" class="btn">Подробнее</a>
+
+                        {% if user.is_authenticated %}
+                            <button class="btn secondary">Бронь</button>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        {% empty %}
+            <p>Туров пока нет</p>
+        {% endfor %}
+
+    </div>
+
+</main>
+
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends 'cafe/base.html' %}
+
+{% block title %}Выход - Туристическое агентство{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 2rem;">
+    <h1>Вы успешно вышли из системы</h1>
+    <p>Спасибо, что посетили наш сайт!</p>
+    <a href="{% url 'main' %}" class="btn">На главную</a>
+    <a href="{% url 'login' %}" class="btn">Войти снова</a>
+</div>
+{% endblock %}

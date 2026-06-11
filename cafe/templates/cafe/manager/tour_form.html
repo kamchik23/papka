@@ -1,0 +1,95 @@
+{% extends 'cafe/base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white p-8 transition-colors duration-300">
+    <div class="max-w-3xl mx-auto">
+        
+        <!-- Кнопка назад -->
+        <a href="{% url 'manager_dashboard' %}" class="inline-flex items-center text-slate-500 hover:text-blue-600 mb-8 transition font-bold text-sm uppercase tracking-widest">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Назад в панель
+        </a>
+
+        <!-- Заголовок -->
+        <div class="mb-10">
+            <h1 class="text-4xl font-black uppercase italic tracking-tighter">
+                {% if form.instance.pk %}Редактировать{% else %}Добавить{% endif %} 
+                <span class="text-blue-600">тур</span>
+            </h1>
+            <p class="text-slate-500 dark:text-slate-400 font-medium mt-2">Заполните информацию о путешествии, чтобы клиенты могли его забронировать.</p>
+        </div>
+
+        <!-- КАРТОЧКА ФОРМЫ -->
+        <div class="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-8 md:p-12 rounded-[2.5rem] shadow-xl backdrop-blur-2xl">
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+
+                {% for field in form %}
+                <div class="flex flex-col space-y-2">
+                    <label class="text-xs uppercase tracking-widest font-black text-slate-400 ml-1">
+                        {{ field.label }}
+                    </label>
+                    
+                    <!-- Отрисовка поля с кастомными классами через виджеты или фильтр -->
+                    <div class="relative">
+                        {{ field }}
+                    </div>
+
+                    {% if field.errors %}
+                        {% for error in field.errors %}
+                            <p class="text-red-500 text-xs mt-1 font-bold">{{ error }}</p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <!-- КНОПКИ -->
+                <div class="pt-6">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white px-8 py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition shadow-lg shadow-blue-500/30">
+                        {% if form.instance.pk %}Сохранить изменения{% else %}Опубликовать тур{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    /* Базовые стили для всех полей */
+    input[type="text"], input[type="number"], input[type="date"], 
+    input[type="datetime-local"], input[type="email"], input[type="file"],
+    textarea, select {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border-radius: 1.25rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        /* ЦВЕТА ДЛЯ СВЕТЛОЙ ТЕМЫ */
+        background-color: #ffffff; 
+        border: 2px solid #e2e8f0; 
+        color: #1e293b !important; /* ТЕМНО-СИНИЙ ТЕКСТ */
+    }
+
+    /* ЦВЕТА ДЛЯ ТЕМНОЙ ТЕМЫ */
+    .dark input[type="text"], .dark input[type="number"], .dark input[type="date"], 
+    .dark input[type="datetime-local"], .dark input[type="email"], .dark input[type="file"],
+    .dark textarea, .dark select {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #f8fafc !important; /* БЕЛЫЙ ТЕКСТ */
+    }
+
+    /* Фокус */
+    input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+
+    /* Чтобы текст внутри textarea был виден всегда */
+    textarea {
+        min-height: 150px;
+    }
+</style>
+{% endblock %}

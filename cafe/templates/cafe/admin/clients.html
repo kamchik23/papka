@@ -1,0 +1,1578 @@
+{% extends 'cafe/base.html' %}
+
+{% block title %}Клиенты - Админ панель{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <!-- Мобильный хедер -->
+    <div class="mobile-header">
+        <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+            <span class="menu-icon">☰</span>
+        </button>
+        <div class="mobile-title">
+            <h1>Управление клиентами</h1>
+            <div class="mobile-stats">
+                <span class="mobile-stat">{{ users.count }} пользователей</span>
+            </div>
+        </div>
+        <div class="mobile-user">
+            <div class="mobile-avatar">{{ user.username|first|upper }}</div>
+        </div>
+    </div>
+
+    <!-- Админ навигация -->
+    <div class="admin-sidebar" id="mobileSidebar">
+        <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+        <div class="sidebar-content">
+            <div class="sidebar-header">
+                <h3 class="sidebar-title">Админ панель</h3>
+                <div class="sidebar-user">
+                    <div class="sidebar-avatar">{{ user.username|first|upper }}</div>
+                    <div class="sidebar-user-info">
+                        <div class="sidebar-username">{{ user.username }}</div>
+                        <div class="sidebar-role">Администратор</div>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="admin-menu">
+                <a href="{% url 'admin_dashboard' %}" class="menu-item {% if active_page == 'dashboard' %}active{% endif %}">
+                    <span class="menu-icon">📊</span>
+                    <span class="menu-title">Дашборд</span>
+                </a>
+                
+                <a href="{% url 'admin_tours' %}" class="menu-item {% if active_page == 'tours' %}active{% endif %}">
+                    <span class="menu-icon">🏝️</span>
+                    <span class="menu-title">Управление турами</span>
+                </a>
+                
+                <a href="{% url 'admin_bookings' %}" class="menu-item {% if active_page == 'bookings' %}active{% endif %}">
+                    <span class="menu-icon">📋</span>
+                    <span class="menu-title">Бронирования</span>
+                </a>
+                
+                <a href="{% url 'admin_clients' %}" class="menu-item active">
+                    <span class="menu-icon">👥</span>
+                    <span class="menu-title">Клиенты</span>
+                    <span class="menu-badge">{{ users.count }}</span>
+                </a>
+                
+                <a href="{% url 'admin_add_tour' %}" class="menu-item {% if active_page == 'add_tour' %}active{% endif %}">
+                    <span class="menu-icon">➕</span>
+                    <span class="menu-title">Добавить тур</span>
+                </a>
+                
+                <a href="/admin/" target="_blank" class="menu-item">
+                    <span class="menu-icon">⚙️</span>
+                    <span class="menu-title">Django-админка</span>
+                </a>
+                
+                <hr class="menu-divider">
+                
+                <a href="{% url 'main' %}" class="menu-item">
+                    <span class="menu-icon">🏠</span>
+                    <span class="menu-title">На главную</span>
+                </a>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="admin-content">
+        <div class="content-header">
+            <div class="header-left">
+                <h1 class="page-title">Управление клиентами</h1>
+                <p class="page-subtitle">Все зарегистрированные пользователи системы</p>
+            </div>
+            <div class="header-right">
+                <button class="btn-primary" onclick="exportClientsToExcel()">
+                    <span class="btn-icon">📊</span>
+                    <span class="btn-text">Экспорт в Excel</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Фильтры и поиск -->
+        <div class="filters-section">
+            <div class="filters-header">
+                <h3 class="filters-title">
+                    <span class="filters-icon">🔍</span>
+                    Поиск и фильтрация
+                </h3>
+                <div class="filters-stats">
+                    <span class="filters-stat">{{ users.count }} пользователей</span>
+                    <span class="filters-stat">{{ staff_count|default:"0" }} администраторов</span>
+                </div>
+            </div>
+            
+            <div class="filters-grid">
+                <div class="search-box">
+                    <input type="text" 
+                           name="search" 
+                           id="searchInput" 
+                           placeholder="Поиск по имени, email или логину..."
+                           value="{{ request.GET.search|default:'' }}"
+                           class="search-input">
+                    <span class="search-icon">🔍</span>
+                </div>
+                
+                <div class="filter-dropdown-wrapper">
+                    <div class="filter-dropdown" id="userTypeFilter">
+                        <button type="button" class="filter-dropdown-toggle" onclick="toggleFilterDropdown()">
+                            <span class="dropdown-title">
+                                {% if request.GET.type == 'staff' %}Администраторы
+                                {% elif request.GET.type == 'client' %}Клиенты
+                                {% else %}Все пользователи{% endif %}
+                            </span>
+                            <span class="dropdown-chevron">▼</span>
+                        </button>
+                        
+                        <div class="filter-dropdown-menu" id="filterDropdownMenu">
+                            <div class="dropdown-header">
+                                <h4>Типы пользователей</h4>
+                                <button type="button" class="dropdown-close" onclick="closeFilterDropdown()">×</button>
+                            </div>
+                            
+                            <div class="dropdown-items">
+                                <label class="filter-checkbox">
+                                    <input type="radio" 
+                                           name="user_type" 
+                                           value="all" 
+                                           class="filter-option"
+                                           {% if not request.GET.type or request.GET.type == 'all' %}checked{% endif %}
+                                           onchange="applyUserTypeFilter()">
+                                    <span class="checkbox-custom"></span>
+                                    <span class="checkbox-label">Все пользователи</span>
+                                </label>
+                                
+                                <label class="filter-checkbox">
+                                    <input type="radio" 
+                                           name="user_type" 
+                                           value="staff" 
+                                           class="filter-option"
+                                           {% if request.GET.type == 'staff' %}checked{% endif %}
+                                           onchange="applyUserTypeFilter()">
+                                    <span class="checkbox-custom"></span>
+                                    <span class="checkbox-label">
+                                        <span class="filter-status active"></span>
+                                        Администраторы
+                                    </span>
+                                </label>
+                                
+                                <label class="filter-checkbox">
+                                    <input type="radio" 
+                                           name="user_type" 
+                                           value="client" 
+                                           class="filter-option"
+                                           {% if request.GET.type == 'client' %}checked{% endif %}
+                                           onchange="applyUserTypeFilter()">
+                                    <span class="checkbox-custom"></span>
+                                    <span class="checkbox-label">
+                                        <span class="filter-status inactive"></span>
+                                        Клиенты
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form method="get" id="filterForm" style="display: none;">
+                        <input type="hidden" name="search" id="filterSearch" value="{{ request.GET.search|default:'' }}">
+                        <input type="hidden" name="type" id="filterType" value="{{ request.GET.type|default:'' }}">
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="admin-messages">
+            {% for message in messages %}
+            <div class="message message-{{ message.tags }}">
+                <span class="message-icon">
+                    {% if message.tags == 'success' %}✅
+                    {% elif message.tags == 'error' %}❌
+                    {% elif message.tags == 'warning' %}⚠️
+                    {% else %}💡{% endif %}
+                </span>
+                <span class="message-text">{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Сетка клиентов -->
+        {% if users %}
+        <div class="clients-grid" id="clientsGrid">
+            {% for client in users %}
+            <div class="client-card {% if client.is_staff %}admin{% elif not client.is_active %}inactive{% endif %}" 
+                 data-name="{{ client.first_name|lower }} {{ client.last_name|lower }}" 
+                 data-email="{{ client.email|lower }}" 
+                 data-username="{{ client.username|lower }}"
+                 data-type="{% if client.is_staff %}staff{% else %}client{% endif %}">
+                <div class="client-card-header">
+                    <div class="client-id">#{{ client.id }}</div>
+                    <div class="client-status">
+                        {% if client.is_staff %}
+                        <span class="status-badge status-admin">Администратор</span>
+                        {% elif client.is_superuser %}
+                        <span class="status-badge status-super">Суперпользователь</span>
+                        {% elif client.is_active %}
+                        <span class="status-badge status-active">Активен</span>
+                        {% else %}
+                        <span class="status-badge status-inactive">Неактивен</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="client-card-body">
+                    <div class="client-avatar-large">{{ client.username|first|upper }}</div>
+                    
+                    <h3 class="client-title">
+                        {% if client.last_name or client.first_name %}
+                            {{ client.last_name|default:"" }} {{ client.first_name|default:"" }}
+                        {% else %}
+                            {{ client.username }}
+                        {% endif %}
+                    </h3>
+                    
+                    <div class="client-username">
+                        <span class="username-icon">👤</span>
+                        @{{ client.username }}
+                    </div>
+                    
+                    <div class="client-email">
+                        <span class="email-icon">📧</span>
+                        {% if client.email %}
+                            <a href="mailto:{{ client.email }}" class="email-link">{{ client.email|truncatechars:25 }}</a>
+                        {% else %}
+                            <span class="empty-email">Email не указан</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="client-phone">
+                        <span class="phone-icon">📱</span>
+                        {% if client.userprofile.phone %}
+                            <a href="tel:{{ client.userprofile.phone }}" class="phone-link">{{ client.userprofile.phone }}</a>
+                        {% else %}
+                            <span class="empty-phone">Телефон не указан</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="client-meta">
+                        <div class="meta-item">
+                            <span class="meta-icon">📅</span>
+                            <span class="meta-text">Зарегистрирован: {{ client.date_joined|date:"d.m.Y" }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-icon">🕒</span>
+                            <span class="meta-text">
+                                {% if client.last_login %}
+                                    Последний вход: {{ client.last_login|date:"d.m.Y" }}
+                                {% else %}
+                                    Никогда не входил
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="client-card-actions">
+                    <a href="/admin/auth/user/{{ client.id }}/change/" target="_blank" class="action-btn edit-btn">
+                        <span class="action-icon">✏️</span>
+                        <span class="action-text">Редактировать</span>
+                    </a>
+                    <a href="{% url 'admin_edit_client' client.id %}" class="action-btn view-btn">
+                        <span class="action-icon">👁️</span>
+                        <span class="action-text">Профиль</span>
+                    </a>
+                    <a href="{% url 'admin_bookings' %}?search={{ client.username }}" class="action-btn bookings-btn">
+                        <span class="action-icon">📋</span>
+                        <span class="action-text">Бронирования</span>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-content">
+                <div class="empty-icon">👤</div>
+                <h3 class="empty-title">Пользователи не найдены</h3>
+                <p class="empty-description">
+                    {% if request.GET.type or request.GET.search %}
+                        По вашим фильтрам пользователей не найдено
+                    {% else %}
+                        В системе пока нет зарегистрированных пользователей
+                    {% endif %}
+                </p>
+                {% if request.GET.type or request.GET.search %}
+                <a href="{% url 'admin_clients' %}" class="btn-primary">
+                    <span class="btn-icon">🔄</span>
+                    <span class="btn-text">Сбросить фильтры</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Управление мобильным меню
+function toggleMobileMenu() {
+    const sidebar = document.getElementById('mobileSidebar');
+    sidebar.classList.toggle('active');
+    document.body.classList.toggle('menu-open');
+}
+
+// Управление выпадающим меню фильтра
+function toggleFilterDropdown() {
+    const menu = document.getElementById('filterDropdownMenu');
+    menu.classList.toggle('show');
+}
+
+function closeFilterDropdown() {
+    const menu = document.getElementById('filterDropdownMenu');
+    menu.classList.remove('show');
+}
+
+// Применение фильтра пользователей
+function applyUserTypeFilter() {
+    const selectedOption = document.querySelector('input[name="user_type"]:checked');
+    const type = selectedOption ? selectedOption.value : '';
+    
+    // Обновляем текст кнопки
+    const button = document.querySelector('.filter-dropdown-toggle .dropdown-title');
+    if (type === 'staff') {
+        button.textContent = 'Администраторы';
+    } else if (type === 'client') {
+        button.textContent = 'Клиенты';
+    } else {
+        button.textContent = 'Все пользователи';
+    }
+    
+    // Сохраняем значение фильтра
+    document.getElementById('filterType').value = type === 'all' ? '' : type;
+    
+    // Сохраняем значение поиска
+    const searchInput = document.getElementById('searchInput');
+    document.getElementById('filterSearch').value = searchInput.value;
+    
+    // Отправляем форму
+    document.getElementById('filterForm').submit();
+    
+    // Закрываем меню
+    closeFilterDropdown();
+}
+
+// Экспорт в Excel
+function exportClientsToExcel() {
+    const table = document.createElement('table');
+    const clients = document.querySelectorAll('.client-card');
+    
+    // Создаем заголовки таблицы
+    const thead = table.createTHead();
+    const headerRow = thead.insertRow();
+    const headers = ['ID', 'ФИО', 'Логин', 'Email', 'Телефон', 'Статус', 'Дата регистрации', 'Последний вход'];
+    
+    headers.forEach(headerText => {
+        const th = document.createElement('th');
+        th.textContent = headerText;
+        headerRow.appendChild(th);
+    });
+    
+    // Заполняем данными
+    const tbody = table.createTBody();
+    clients.forEach(client => {
+        if (client.style.display !== 'none') {
+            const row = tbody.insertRow();
+            
+            const id = client.querySelector('.client-id').textContent.replace('#', '');
+            const name = client.querySelector('.client-title').textContent.trim();
+            const username = client.querySelector('.client-username').textContent.replace('👤', '').trim();
+            const email = client.querySelector('.email-link') ? client.querySelector('.email-link').textContent.trim() : 'Не указан';
+            const phone = client.querySelector('.phone-link') ? client.querySelector('.phone-link').textContent.trim() : 'Не указан';
+            const status = client.querySelector('.status-badge').textContent.trim();
+            const regDate = client.querySelector('.meta-item:nth-child(1) .meta-text').textContent.replace('Зарегистрирован:', '').trim();
+            const lastLogin = client.querySelector('.meta-item:nth-child(2) .meta-text').textContent.replace('Последний вход:', '').trim();
+            
+            [id, name, username, email, phone, status, regDate, lastLogin].forEach(cellText => {
+                const cell = row.insertCell();
+                cell.textContent = cellText;
+            });
+        }
+    });
+    
+    // Экспорт
+    const html = table.outerHTML;
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'clients_' + new Date().toISOString().split('T')[0] + '.xls';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Фильтрация клиентов в реальном времени
+function filterClients() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const clients = document.querySelectorAll('.client-card');
+    const selectedType = document.getElementById('filterType').value || 'all';
+    
+    clients.forEach(client => {
+        const name = client.getAttribute('data-name');
+        const email = client.getAttribute('data-email');
+        const username = client.getAttribute('data-username');
+        const type = client.getAttribute('data-type');
+        
+        const matchesSearch = name.includes(filter) || email.includes(filter) || username.includes(filter);
+        const matchesType = selectedType === 'all' || type === selectedType;
+        
+        if (matchesSearch && matchesType) {
+            client.style.display = 'block';
+        } else {
+            client.style.display = 'none';
+        }
+    });
+}
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', function() {
+    // Реализуем живую фильтрацию при вводе текста
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            filterClients();
+        });
+        
+        // Применяем фильтр сразу после загрузки
+        setTimeout(() => filterClients(), 100);
+    }
+    
+    // Закрытие меню при клике на ссылку
+    document.querySelectorAll('.admin-menu a').forEach(link => {
+        link.addEventListener('click', () => {
+            const sidebar = document.getElementById('mobileSidebar');
+            if (sidebar.classList.contains('active')) {
+                toggleMobileMenu();
+            }
+        });
+    });
+    
+    // Закрытие выпадающего меню при клике вне его
+    document.addEventListener('click', function(e) {
+        const filterDropdown = document.getElementById('userTypeFilter');
+        const filterMenu = document.getElementById('filterDropdownMenu');
+        
+        if (!filterDropdown.contains(e.target) && filterMenu.classList.contains('show')) {
+            closeFilterDropdown();
+        }
+    });
+    
+    // Принудительная проверка структуры (для отладки)
+    console.log('Sidebar element:', document.getElementById('mobileSidebar'));
+    console.log('Admin content element:', document.querySelector('.admin-content'));
+});
+</script>
+
+<style>
+/* ОСНОВНЫЕ СТИЛИ СТРУКТУРЫ */
+:root {
+    --primary-color: #2C5277;
+    --secondary-color: #4A90E2;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --danger-color: #e74c3c;
+    --dark-color: #2c3e50;
+    --gray-color: #7f8c8d;
+    --light-gray: #f8f9fa;
+    --border-color: #e0e0e0;
+    --shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    --border-radius: 12px;
+    --card-radius: 16px;
+}
+
+/* Основной контейнер */
+.admin-container {
+    display: flex;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+    position: relative;
+}
+
+/* Мобильный хедер */
+.mobile-header {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: white;
+    box-shadow: 0 2px 15px rgba(44, 82, 119, 0.1);
+    padding: 12px 16px;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(10px);
+}
+
+.mobile-menu-toggle {
+    background: var(--primary-color);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle:hover {
+    background: var(--secondary-color);
+    transform: scale(1.05);
+}
+
+.mobile-title {
+    flex: 1;
+    margin: 0 15px;
+}
+
+.mobile-title h1 {
+    font-size: 1.1rem;
+    margin: 0;
+    color: var(--dark-color);
+    font-weight: 600;
+}
+
+.mobile-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.mobile-stat {
+    font-size: 0.85rem;
+    color: var(--gray-color);
+    background: var(--light-gray);
+    padding: 4px 10px;
+    border-radius: 8px;
+}
+
+.mobile-user {
+    display: flex;
+    align-items: center;
+}
+
+.mobile-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Админ навигация - ВАЖНО: position: fixed для десктопа */
+.admin-sidebar {
+    width: 280px;
+    background: white;
+    box-shadow: 2px 0 15px rgba(44, 82, 119, 0.08);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-right: 1px solid var(--border-color);
+}
+
+.sidebar-content {
+    height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    backdrop-filter: blur(3px);
+}
+
+.sidebar-header {
+    padding: 30px 25px 20px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.sidebar-title {
+    font-size: 1.3rem;
+    margin: 0 0 20px 0;
+    font-weight: 600;
+    text-align: center;
+    opacity: 0.95;
+}
+
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-avatar {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    flex-shrink: 0;
+}
+
+.sidebar-user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.sidebar-username {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-role {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.admin-menu {
+    padding: 20px 0;
+    flex: 1;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 16px 25px;
+    text-decoration: none;
+    color: var(--dark-color);
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+    margin: 0 10px;
+    border-radius: 10px;
+    position: relative;
+}
+
+.menu-item:hover {
+    background: rgba(44, 82, 119, 0.05);
+    color: var(--primary-color);
+    transform: translateX(5px);
+}
+
+.menu-item.active {
+    background: rgba(44, 82, 119, 0.1);
+    color: var(--primary-color);
+    border-left-color: var(--primary-color);
+    font-weight: 500;
+}
+
+.menu-icon {
+    font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.menu-title {
+    font-weight: 500;
+    font-size: 0.95rem;
+    flex: 1;
+}
+
+.menu-badge {
+    background: var(--primary-color);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 10px;
+    min-width: 24px;
+    text-align: center;
+}
+
+.menu-divider {
+    margin: 20px 25px;
+    border: none;
+    border-top: 1px solid var(--border-color);
+    opacity: 0.5;
+}
+
+/* Основной контент - ВАЖНО: margin-left для отступа от сайдбара */
+.admin-content {
+    flex: 1;
+    margin-left: 280px;
+    padding: 30px;
+    max-width: calc(100% - 280px);
+    background: transparent;
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.header-left {
+    flex: 1;
+    min-width: 300px;
+}
+
+.page-title {
+    font-size: 2rem;
+    color: var(--dark-color);
+    margin: 0 0 8px 0;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.page-subtitle {
+    color: var(--gray-color);
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+.header-right {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Кнопки */
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(44, 82, 119, 0.2);
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(44, 82, 119, 0.3);
+    background: linear-gradient(135deg, #2a4d6d 0%, var(--primary-color) 100%);
+}
+
+.btn-icon {
+    font-size: 1.1rem;
+}
+
+/* Сообщения */
+.admin-messages {
+    margin-bottom: 25px;
+}
+
+.message {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 18px 24px;
+    border-radius: var(--border-radius);
+    margin-bottom: 15px;
+    font-weight: 500;
+    border-left: 4px solid;
+    background: white;
+    box-shadow: var(--shadow);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message-success {
+    border-left-color: var(--success-color);
+    background: linear-gradient(90deg, rgba(39, 174, 96, 0.05) 0%, rgba(39, 174, 96, 0.02) 100%);
+}
+
+.message-error {
+    border-left-color: var(--danger-color);
+    background: linear-gradient(90deg, rgba(231, 76, 60, 0.05) 0%, rgba(231, 76, 60, 0.02) 100%);
+}
+
+.message-warning {
+    border-left-color: var(--warning-color);
+    background: linear-gradient(90deg, rgba(243, 156, 18, 0.05) 0%, rgba(243, 156, 18, 0.02) 100%);
+}
+
+.message-info {
+    border-left-color: var(--primary-color);
+    background: linear-gradient(90deg, rgba(44, 82, 119, 0.05) 0%, rgba(44, 82, 119, 0.02) 100%);
+}
+
+.message-icon {
+    font-size: 1.3rem;
+}
+
+.message-text {
+    flex: 1;
+    font-size: 0.95rem;
+}
+
+/* Фильтры и поиск */
+.filters-section {
+    background: white;
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    margin-bottom: 25px;
+    padding: 25px;
+}
+
+.filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.filters-title {
+    font-size: 1.2rem;
+    color: var(--dark-color);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.filters-icon {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+}
+
+.filters-stats {
+    display: flex;
+    gap: 20px;
+}
+
+.filters-stat {
+    font-size: 0.9rem;
+    color: var(--gray-color);
+    background: var(--light-gray);
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+.search-box {
+    position: relative;
+}
+
+.search-input {
+    width: 100%;
+    padding: 16px 20px 16px 50px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: var(--light-gray);
+    outline: none;
+}
+
+.search-input:focus {
+    border-color: var(--primary-color);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(44, 82, 119, 0.1);
+}
+
+.search-icon {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    color: var(--gray-color);
+    pointer-events: none;
+}
+
+/* Специальные стили для фильтрации */
+.filter-dropdown-wrapper {
+    position: relative;
+}
+
+.filter-dropdown {
+    position: relative;
+}
+
+.filter-dropdown-toggle {
+    width: 100%;
+    padding: 16px 20px;
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--dark-color);
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    outline: none;
+    min-height: 56px;
+}
+
+.filter-dropdown-toggle:hover {
+    border-color: var(--primary-color);
+    background: var(--light-gray);
+}
+
+.dropdown-title {
+    flex: 1;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.dropdown-chevron {
+    font-size: 0.9rem;
+    color: var(--gray-color);
+    transition: transform 0.3s ease;
+    margin-left: 10px;
+}
+
+.filter-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    margin-top: 8px;
+    padding: 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.filter-dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.dropdown-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--dark-color);
+    font-weight: 600;
+}
+
+.dropdown-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--gray-color);
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.dropdown-close:hover {
+    background: var(--light-gray);
+    color: var(--dark-color);
+}
+
+.dropdown-items {
+    padding: 10px 0;
+}
+
+.filter-checkbox {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.filter-checkbox:hover {
+    background-color: var(--light-gray);
+}
+
+.filter-option {
+    display: none;
+}
+
+.checkbox-custom {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    margin-right: 12px;
+    position: relative;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.filter-option:checked + .checkbox-custom {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.filter-option:checked + .checkbox-custom::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+}
+
+.checkbox-label {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+    color: var(--dark-color);
+    font-weight: 500;
+}
+
+.filter-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.filter-status.active {
+    background: var(--warning-color);
+}
+
+.filter-status.inactive {
+    background: var(--secondary-color);
+}
+
+/* Сетка клиентов */
+.clients-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+
+.client-card {
+    background: white;
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.client-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(44, 82, 119, 0.15);
+    border-color: var(--primary-color);
+}
+
+.client-card.admin {
+    border-left: 4px solid var(--warning-color);
+}
+
+.client-card.inactive {
+    opacity: 0.8;
+    border-left: 4px solid var(--danger-color);
+}
+
+.client-card.inactive:hover {
+    opacity: 1;
+}
+
+.client-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--light-gray);
+}
+
+.client-id {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--gray-color);
+    font-size: 0.9rem;
+    background: white;
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.client-status {
+    display: flex;
+}
+
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-admin {
+    background: rgba(243, 156, 18, 0.1);
+    color: var(--warning-color);
+    border: 1px solid rgba(243, 156, 18, 0.2);
+}
+
+.status-super {
+    background: rgba(155, 89, 182, 0.1);
+    color: #9b59b6;
+    border: 1px solid rgba(155, 89, 182, 0.2);
+}
+
+.status-active {
+    background: rgba(39, 174, 96, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(39, 174, 96, 0.2);
+}
+
+.status-inactive {
+    background: rgba(231, 76, 60, 0.1);
+    color: var(--danger-color);
+    border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.client-card-body {
+    padding: 20px;
+    text-align: center;
+}
+
+.client-avatar-large {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 2rem;
+    margin: 0 auto 20px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.client-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--dark-color);
+    margin: 0 0 10px 0;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.6em;
+}
+
+.client-username {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--secondary-color);
+    font-weight: 600;
+    margin-bottom: 12px;
+    font-size: 1rem;
+}
+
+.client-email, .client-phone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--gray-color);
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.email-icon, .phone-icon, .username-icon {
+    font-size: 1.1rem;
+    opacity: 0.7;
+}
+
+.email-link, .phone-link {
+    color: var(--dark-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.email-link:hover {
+    color: var(--secondary-color);
+}
+
+.phone-link:hover {
+    color: var(--success-color);
+}
+
+.empty-email, .empty-phone {
+    color: var(--gray-color);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+.client-meta {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--gray-color);
+    margin-bottom: 8px;
+    justify-content: center;
+}
+
+.meta-item:last-child {
+    margin-bottom: 0;
+}
+
+.meta-icon {
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.client-card-actions {
+    display: flex;
+    padding: 15px 20px 20px;
+    border-top: 1px solid var(--border-color);
+    background: var(--light-gray);
+    gap: 10px;
+}
+
+.action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: none;
+    border: none;
+    transition: all 0.3s ease;
+    min-height: 44px;
+}
+
+.action-icon {
+    font-size: 1rem;
+}
+
+.action-text {
+    font-size: 0.85rem;
+}
+
+.edit-btn {
+    background: rgba(243, 156, 18, 0.1);
+    color: var(--warning-color);
+    border: 1px solid rgba(243, 156, 18, 0.2);
+}
+
+.view-btn {
+    background: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+    border: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.bookings-btn {
+    background: rgba(39, 174, 96, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(39, 174, 96, 0.2);
+}
+
+.edit-btn:hover {
+    background: var(--warning-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.view-btn:hover {
+    background: #3498db;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.bookings-btn:hover {
+    background: var(--success-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Состояние "пусто" */
+.empty-state {
+    background: white;
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    padding: 60px 40px;
+    text-align: center;
+    margin: 40px 0;
+}
+
+.empty-content {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: #e0e0e0;
+    margin-bottom: 20px;
+}
+
+.empty-title {
+    font-size: 1.5rem;
+    color: var(--dark-color);
+    margin: 0 0 10px 0;
+    font-weight: 600;
+}
+
+.empty-description {
+    color: var(--gray-color);
+    margin: 0 0 30px 0;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* АДАПТИВНОСТЬ */
+@media (max-width: 1024px) {
+    .clients-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+    
+    .filters-grid {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Мобильный хедер */
+    .mobile-header {
+        display: flex;
+    }
+    
+    /* Скрываем сайдбар на мобильных */
+    .admin-sidebar {
+        transform: translateX(-100%);
+        width: 85%;
+        max-width: 320px;
+    }
+    
+    .admin-sidebar.active {
+        transform: translateX(0);
+    }
+    
+    .admin-sidebar.active + .sidebar-overlay {
+        display: block;
+    }
+    
+    body.menu-open {
+        overflow: hidden;
+    }
+    
+    /* Основной контент без отступа на мобильных */
+    .admin-content {
+        margin-left: 0;
+        max-width: 100%;
+        padding: 80px 16px 20px;
+    }
+    
+    .content-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+    
+    .header-left {
+        min-width: unset;
+    }
+    
+    .page-title {
+        font-size: 1.6rem;
+    }
+    
+    .page-subtitle {
+        font-size: 1rem;
+    }
+    
+    /* Сетка клиентов на мобильных */
+    .clients-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .client-card {
+        max-width: 100%;
+    }
+    
+    .client-card-actions {
+        flex-direction: column;
+    }
+    
+    .action-btn {
+        width: 100%;
+    }
+    
+    /* Адаптивные фильтры */
+    .filters-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .filter-dropdown-menu {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
+        width: 90%;
+        max-width: 400px;
+        margin: 0;
+    }
+    
+    .filter-dropdown-menu.show {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-content {
+        padding: 70px 12px 16px;
+    }
+    
+    .client-avatar-large {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .client-title {
+        font-size: 1.2rem;
+    }
+    
+    .empty-state {
+        padding: 40px 20px;
+    }
+    
+    .empty-icon {
+        font-size: 3rem;
+    }
+    
+    .empty-title {
+        font-size: 1.3rem;
+    }
+}
+</style>
+{% endblock %}
