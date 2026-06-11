@@ -53,20 +53,16 @@ TEMPLATES = [
 WSGI_APPLICATION = 'demo.wsgi.application'
 
 # --- БАЗА ДАННЫХ (ИСПРАВЛЕНО) ---
-# Vercel дает несколько имен для базы. Мы проверяем их все.
-db_url = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL')
+db_from_env = os.environ.get('POSTGRES_URL') or os.environ.get('DATABASE_URL')
 
-if db_url:
-    # Если мы на Vercel и база подключена
+if db_from_env:
     DATABASES = {
-        'default': dj_database_url.config(
-            default=db_url,
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
+        'default': dj_database_url.parse(db_from_env)
     }
+    # Дополнительные параметры для стабильности Postgres
+    DATABASES['default']['CONN_MAX_AGE'] = 600
 else:
-    # Если запускаешь локально (PowerShell)
+    # Только если запускаешь локально (на компе)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
