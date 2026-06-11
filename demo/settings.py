@@ -59,9 +59,11 @@ WSGI_APPLICATION = 'demo.wsgi.application'
 # На Vercel файловая система только для чтения. SQLite будет сбрасываться.
 # Этот код автоматически использует Postgres, если он подключен в Vercel, 
 # или SQLite, если ты запускаешь проект локально.
+DATABASE_URL = os.environ.get('POSTGRES_URL')
+
 DATABASES = {
     'default': dj_database_url.config(
-        default=f"sqlite:///{os.path.join(BASE_DIR, 'db.sqlite3')}",
+        default=DATABASE_URL if DATABASE_URL else f"sqlite:///{os.path.join(BASE_DIR, 'db.sqlite3')}",
         conn_max_age=600
     )
 }
