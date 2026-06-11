@@ -9,12 +9,12 @@
   "routes": [
     {
       "src": "/static/(.*)",
-      "dest": "cafe/static/$1"
+      "dest": "/static/$1"
     },
     {
       "src": "/(.*)",
       "dest": "demo/wsgi.py"
     }
   ],
-  "installCommand": "pip install -r requirements.txt && python manage.py migrate"
+  "installCommand": "pip install -r requirements.txt && python manage.py migrate && python manage.py collectstatic --noinput"
 }
