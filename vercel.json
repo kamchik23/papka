@@ -1,19 +1,8 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "demo/wsgi.py",
-      "use": "@vercel/python"
-    }
-  ],
+  "builds": [{ "src": "demo/wsgi.py", "use": "@vercel/python" }],
   "routes": [
-    {
-      "src": "/static/(.*)",
-      "dest": "cafe/static/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "demo/wsgi.py"
-    }
+    { "src": "/static/(.*)", "dest": "cafe/static/$1" },
+    { "src": "/(.*)", "dest": "demo/wsgi.py" }
   ]
 }
