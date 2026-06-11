@@ -20,7 +20,7 @@ try:
     # Замени 'admin' и '12345' на свои логин и пароль
     if not User.objects.filter(username='admin').exists():
         User.objects.create_superuser('admin', 'admin@example.com', '12345')
-        print("Admin created: login 'admin', pass '12345'")
+        print("Admin created: login 'admin', pass 'Kamzeop569812!@'")
     else:
         print("Admin already exists")
 
