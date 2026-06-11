@@ -53,22 +53,30 @@ TEMPLATES = [
 WSGI_APPLICATION = 'demo.wsgi.application'
 
 # --- БАЗА ДАННЫХ (ИСПРАВЛЕНО) ---
-db_from_env = os.environ.get('POSTGRES_URL') or os.environ.get('DATABASE_URL')
+DATABASE_URL = os.environ.get('POSTGRES_URL') or os.environ.get('DATABASE_URL')
 
-if db_from_env:
+if DATABASE_URL:
     DATABASES = {
-        'default': dj_database_url.parse(db_from_env)
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-    # Дополнительные параметры для стабильности Postgres
-    DATABASES['default']['CONN_MAX_AGE'] = 600
+    # Явно указываем движок Postgres
+    DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
 else:
-    # Только если запускаешь локально (на компе)
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+    # Оставляем sqlite ТОЛЬКО для локальной разработки
+    if 'VERCEL' not in os.environ:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
         }
-    }
+    else:
+        # Если мы на Vercel, но базы нет - выкидываем ошибку
+        raise Exception("DATABASE_URL is not found in Vercel Environment Variables!")
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
