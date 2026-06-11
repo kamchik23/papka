@@ -1,21 +1,30 @@
 import os
-import time
 from django.core.wsgi import get_wsgi_application
 from django.core.management import call_command
+from django.contrib.auth import get_user_model
 
-# Указываем настройки твоего проекта
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'demo.settings')
 
-# Инициализируем приложение Django
 application = get_wsgi_application()
 
-# Код ниже запускает миграции (создает таблицы в базе Neon)
+# Скрипт автоматизации при запуске
 try:
-    print("Vercel startup: Running migrations...")
+    # 1. Создаем таблицы
     call_command('migrate', interactive=False)
-    print("Vercel startup: Migrations finished!")
-except Exception as e:
-    print(f"Vercel startup: Migration failed: {e}")
+    
+    # 2. Собираем статику
+    call_command('collectstatic', '--noinput')
 
-# Это нужно для Vercel (он ищет переменную app)
+    # 3. Создаем админа, если его еще нет
+    User = get_user_model()
+    # Замени 'admin' и '12345' на свои логин и пароль
+    if not User.objects.filter(username='admin').exists():
+        User.objects.create_superuser('admin', 'admin@example.com', '12345')
+        print("Admin created: login 'admin', pass '12345'")
+    else:
+        print("Admin already exists")
+
+except Exception as e:
+    print(f"Startup script error: {e}")
+
 app = application
