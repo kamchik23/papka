@@ -6,8 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-me-please')
 
-# На Vercel DEBUG лучше True для отладки, потом поменяешь на False
-DEBUG = True
+DEBUG = True # На Vercel можно оставить True для отладки, потом сменишь на False
 
 ALLOWED_HOSTS = ['*', '.vercel.app']
 
@@ -17,13 +16,15 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'cloudinary_storage', # ДОЛЖНО БЫТЬ ПЕРЕД staticfiles
     'django.contrib.staticfiles',
+    'cloudinary',         # Библиотека Cloudinary
     'cafe', 
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # СТРОГО ПОСЛЕ SecurityMiddleware
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -52,8 +53,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'demo.wsgi.application'
 
-# --- БАЗА ДАННЫХ (НЕОН) ---
-# Проверяем все варианты названий переменной базы данных
+# --- БАЗА ДАННЫХ ---
 db_url = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL')
 
 if db_url:
@@ -72,6 +72,17 @@ else:
         }
     }
 
+# --- ХРАНЕНИЕ ФАЙЛОВ (Cloudinary) ---
+# Эти настройки позволят загружать фото отелей в облако, а не на диск Vercel
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
+# Указываем Django использовать Cloudinary для Медиа-файлов (картинок)
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
 ]
@@ -81,13 +92,14 @@ TIME_ZONE = 'Europe/Moscow'
 USE_I18N = True
 USE_TZ = True
 
-# --- СТАТИКА (ДЛЯ АДМИНКИ И ИГРЫ) ---
+# --- СТАТИКА ---
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'cafe', 'static')]
-
-# Настройка для WhiteNoise (без хэширования, чтобы не было 404 в Unity)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+
+# --- МЕДИА (Картинки отелей) ---
+MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -95,6 +107,5 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/login/'
 
-# Безопасность для Vercel
 CSRF_TRUSTED_ORIGINS = ['https://*.vercel.app']
 X_FRAME_OPTIONS = 'SAMEORIGIN'
