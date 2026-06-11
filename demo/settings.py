@@ -4,14 +4,13 @@ from pathlib import Path
 # Базовая директория проекта
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# ⚠️ ОБЯЗАТЕЛЬНО замени на реальный ключ!
+# Ключ безопасности
 SECRET_KEY = 'django-insecure-change-me-please'
 
+# Оставляем True, чтобы видеть ошибки, если что-то пойдет не так
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-
 
 # Приложения
 INSTALLED_APPS = [
@@ -21,15 +20,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    # твои приложения
-    'cafe',
+    'cafe',  # Твое приложение
 ]
 
-
-# Middleware
+# Middleware - ПОРЯДОК ВАЖЕН!
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Должен быть сразу после SecurityMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -38,21 +35,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
 ROOT_URLCONF = 'demo.urls'
 
-
-# ШАБЛОНЫ
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-
-        # 🔥 теперь можно хранить шаблоны глобально
-        'DIRS': [BASE_DIR / 'templates'],
-
-        # + Django будет искать в app/templates
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
-
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -64,7 +53,6 @@ TEMPLATES = [
     },
 ]
 
-
 # БАЗА ДАННЫХ
 DATABASES = {
     'default': {
@@ -73,8 +61,7 @@ DATABASES = {
     }
 }
 
-
-# ВАЛИДАЦИЯ ПАРОЛЕЙ
+# Валидация паролей
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -82,42 +69,30 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-
-# ЯЗЫК И ВРЕМЯ
+# Язык и время
 LANGUAGE_CODE = 'ru-ru'
 TIME_ZONE = 'Europe/Moscow'
-
 USE_I18N = True
 USE_TZ = True
 
-
-# СТАТИКА (CSS, JS, картинки)
+# --- СТАТИКА (ГЛАВНОЕ ДЛЯ ИГРЫ) ---
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# где искать статику во время разработки
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
+# Настройка WhiteNoise для работы на Vercel
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# куда собирать статику на проде
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+# Медиа файлы
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-
-# DEFAULT ID
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
-# АВТОРИЗАЦИЯ
+# Авторизация
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/login/'
 
-
-# СЕССИИ
-SESSION_COOKIE_AGE = 1209600  # 2 недели
-SESSION_SAVE_EVERY_REQUEST = True
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
+# Настройки для Unity (разрешаем iframe)
 X_FRAME_OPTIONS = 'SAMEORIGIN'
